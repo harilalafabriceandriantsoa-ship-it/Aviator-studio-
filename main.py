@@ -32,77 +32,7 @@ def load_data():
     return []
 
 # ================= CSS PREMIUM ULTRA STYLÉ =================
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;700&display=swap');
-
-.stApp {
-    background: radial-gradient(ellipse at 50% 0%, #1a0033 0%, #000008 60%, #001a0d 100%); 
-    color: #e0fbfc;
-    font-family: 'Rajdhani', sans-serif;
-}
-
-.main-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 3.5rem;
-    text-align: center; 
-    background: linear-gradient(90deg, #ff0066, #ff3399, #00ffcc, #ff0066); 
-    background-size: 200% auto;
-    -webkit-background-clip: text; 
-    -webkit-text-fill-color: transparent;
-    animation: shine 3s linear infinite;
-}
-
-@keyframes shine { to { background-position: 200% center; } }
-
-.glass-card {
-    background: rgba(15, 0, 30, 0.85); 
-    border: 1px solid rgba(255, 0, 102, 0.3); 
-    border-radius: 20px; 
-    padding: 25px; 
-    backdrop-filter: blur(15px);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-}
-
-.entry-display {
-    font-family: 'Orbitron'; 
-    font-size: 5rem; 
-    font-weight: 900; 
-    text-align: center;
-    color: #ff0066; 
-    text-shadow: 0 0 30px #ff0066; 
-    margin: 15px 0;
-}
-
-.target-container {
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 15px;
-    padding: 15px;
-    text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.val-target {
-    font-size: 2.2rem;
-    font-weight: 900;
-    font-family: 'Orbitron';
-}
-
-/* Custom Buttons */
-.stButton>button {
-    border-radius: 12px !important;
-    font-weight: 700 !important;
-    height: 50px !important;
-    transition: all 0.3s ease !important;
-}
-
-div.stButton > button:first-child {
-    background: linear-gradient(135deg, #ff0066 0%, #ff3399 100%) !important;
-    color: white !important;
-    border: none !important;
-}
-</style>
-""", unsafe_allow_html=True)
+# ... (existing CSS code) ...
 
 # ================= SESSION STATE =================
 if "auth" not in st.session_state:
@@ -148,7 +78,12 @@ def run_engine_andr(sha5, heure, last_cote):
         h, m = map(int, heure.split(':'))
         base_t = datetime.now().replace(hour=h, minute=m, second=0)
     except:
-        base_t = datetime.now()
+        st.error("Veuillez entrer l'heure au format HH:MM")
+        return None
+    
+    # Vérifier si l'heure est dans le futur
+    if base_t < datetime.now():
+        base_t = base_t.replace(day=base_t.day + 1)
     
     shift = 45 + (seed % 35)
     entry_t = (base_t + timedelta(seconds=shift)).strftime("%H:%M:%S")
@@ -193,10 +128,12 @@ with col_in:
     if st.button("🚀 ANALYSER", use_container_width=True):
         if sha_in and time_in:
             with st.spinner("Simulating 250k rounds..."):
-                st.session_state.last_res = run_engine_andr(sha_in, time_in, cote_in)
-                st.session_state.history.append(st.session_state.last_res)
-                save_data(st.session_state.history[-50:])
-                st.rerun()
+                result = run_engine_andr(sha_in, time_in, cote_in)
+                if result:
+                    st.session_state.last_res = result
+                    st.session_state.history.append(result)
+                    save_data(st.session_state.history[-50:])
+                    st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
 with col_out:

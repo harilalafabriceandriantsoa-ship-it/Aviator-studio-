@@ -9,7 +9,7 @@ from pathlib import Path
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.preprocessing import StandardScaler
 import pickle
-import random
+import os
 
 # ===================== CONFIGURATION =====================
 st.set_page_config(
@@ -19,12 +19,11 @@ st.set_page_config(
 )
 
 # ===================== PERSISTENCE =====================
-try:
-    DATA_DIR = Path(__file__).parent / "aviator_v4000_data"
-except:
-    DATA_DIR = Path.cwd() / "aviator_v4000_data"
-
+# Amboarina ny lalana halehan'ny data mba tsy hisy error
+BASE_DIR = Path.cwd()
+DATA_DIR = BASE_DIR / "aviator_v4000_data"
 DATA_DIR.mkdir(exist_ok=True, parents=True)
+
 HISTORY_FILE = DATA_DIR / "history.json"
 ML_MODEL_FILE = DATA_DIR / "ml_model.pkl"
 
@@ -32,29 +31,33 @@ def save_data(data):
     try:
         with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-    except: pass
+    except Exception as e:
+        st.error(f"Error saving data: {e}")
 
 def load_data():
     try:
         if HISTORY_FILE.exists():
             with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
-    except: pass
+    except Exception:
+        pass
     return []
 
 def save_ml_model(model, scaler):
     try:
         with open(ML_MODEL_FILE, 'wb') as f:
             pickle.dump({'model': model, 'scaler': scaler}, f)
-    except: pass
+    except Exception:
+        pass
 
 def load_ml_model():
     try:
         if ML_MODEL_FILE.exists():
             with open(ML_MODEL_FILE, 'rb') as f:
                 data = pickle.load(f)
-                return data['model'], data['scaler']
-    except: pass
+                return data.get('model'), data.get('scaler')
+    except Exception:
+        pass
     return None, None
 
 # ===================== CSS ULTRA MOBILE-FRIENDLY =====================
@@ -120,7 +123,7 @@ st.markdown("""
         font-weight: 900;
         font-family: 'Orbitron';
     }
-    
+
     .stButton>button {
         background: linear-gradient(135deg, #ff0066, #ff3399) !important;
         color: white !important;
@@ -142,9 +145,11 @@ if "history" not in st.session_state:
 if "last_res" not in st.session_state:
     st.session_state.last_res = None
 if "ml_model" not in st.session_state:
-    st.session_state.ml_model, st.session_state.ml_scaler = load_ml_model()
+    m, s = load_ml_model()
+    st.session_state.ml_model = m
+    st.session_state.ml_scaler = s
 
-# Timezone Madagascar
+# ===================== TIMEZONE MADAGASCAR =====================
 TZ_MG = pytz.timezone("Indian/Antananarivo")
 
 # ===================== LOGIN =====================
@@ -154,44 +159,68 @@ if not st.session_state.auth:
     with col_b:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
         pw = st.text_input("🔑 PASSWORD", type="password")
-        if st.button("ACTIVATE", use_container_width=True):
+        if st.button("ACTIVATE"):
             if pw == "AVIATOR2026":
                 st.session_state.auth = True
                 st.rerun()
             else:
-                st.error("❌ Incorrect")
+                st.error("❌ Password diso")
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# ===================== ENGINE LOGIC =====================
+# ===================== ML TRAINING =====================
+def train_ml_model():
+    labeled = [h for h in st.session_state.history if h.get('result') in ['WIN', 'LOSS']]
+    if len(labeled) < 10:
+        return None, None
+    
+    X, y = [], []
+    for h in labeled:
+        try:
+            hex_val = int(h['hex'], 16) if all(c in '0123456789abcdef' for c in h['hex']) else 0
+            features = [hex_val % 1000, h.get('last_cote', 1.0), h.get('prob', 0), h.get('conf', 0)]
+            X.append(features)
+            y.append(1 if h['result'] == 'WIN' else 0)
+        except: continue
+        
+    try:
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+        model = GradientBoostingRegressor(n_estimators=100, random_state=42)
+        model.fit(X_scaled, y)
+        save_ml_model(model, scaler)
+        return model, scaler
+    except:
+        return None, None
+
+# ===================== ENGINE =====================
 def run_ultra_v4000(hex_input, last_heure, last_cote):
     hex5 = hex_input.strip().lower()[:5]
     combined = f"{hex5}:{last_heure}:{last_cote}"
     full_hash = hashlib.sha512(combined.encode()).hexdigest()
     hash_num = int(full_hash[:16], 16)
     
-    # Simple simulation logic for 300k sims
-    base = 2.0 + (hash_num % 100) / 500
-    prob_x3 = round(40.0 + (hash_num % 15), 2)
+    np.random.seed(hash_num % (2**32))
+    sims = np.random.lognormal(np.log(2.0), 0.2, 100_000)
+    
+    prob_x3 = round(float(np.mean(sims >= 3.0)) * 100, 2)
+    conf = round(min(99, prob_x3 * 2.1), 2)
     
     now_mg = datetime.now(TZ_MG)
-    # Corrected entry time logic
     entry_time = (now_mg + timedelta(seconds=45)).strftime("%H:%M:%S")
     
     result = {
         "id": full_hash[:8],
         "hex": hex5,
         "entry": entry_time,
-        "signal": "🔥 STRONG X3+ — ENGAGE" if prob_x3 > 45 else "🟢 GOOD X3+ — SCALP",
         "prob": prob_x3,
-        "prob_x3_5": round(prob_x3 * 0.8, 2),
-        "prob_x4": round(prob_x3 * 0.6, 2),
-        "conf": 85.0,
-        "strength": 8.5,
-        "min": 1.50,
-        "moy": 2.50,
-        "max": 3.50,
-        "result": "PENDING"
+        "conf": conf,
+        "min": round(float(np.percentile(sims, 20)), 2),
+        "moy": round(float(np.percentile(sims, 50)), 2),
+        "max": round(float(np.percentile(sims, 80)), 2),
+        "result": "PENDING",
+        "last_cote": last_cote,
+        "signal": "🟢 GOOD" if prob_x3 > 30 else "⚠️ WAIT"
     }
     
     st.session_state.history.append(result)
@@ -199,45 +228,43 @@ def run_ultra_v4000(hex_input, last_heure, last_cote):
     return result
 
 # ===================== MAIN UI =====================
-st.markdown("<div class='main-title'>AVIATOR V4000</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-title'>AVIATOR ULTRA V4000</div>", unsafe_allow_html=True)
 
-col_in, col_out = st.columns([1, 2], gap="medium")
+col_in, col_out = st.columns([1, 2])
 
 with col_in:
     st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-    st.markdown("### 📥 INPUT")
-    hex_in = st.text_input("🔐 HEX (SHA512 5 premiers)")
-    heure_in = st.text_input("⏰ LAST HEURE (HH:MM)")
-    cote_in = st.number_input("📊 LAST COTE", value=1.88)
+    hex_in = st.text_input("🔐 HEX SHA512 (5 chars)", placeholder="ac50e")
+    heure_in = st.text_input("⏰ LAST HEURE (HH:MM)", placeholder="20:22")
+    cote_in = st.number_input("📊 LAST COTE", value=1.88, step=0.01)
     
-    if st.button("🚀 ANALYSER ULTRA", use_container_width=True):
+    if st.button("🚀 ANALYSER"):
         if hex_in and heure_in:
-            with st.spinner("⚡ Processing..."):
-                res = run_ultra_v4000(hex_in, heure_in, cote_in)
-                st.session_state.last_res = res
-                st.rerun()
+            res = run_ultra_v4000(hex_in, heure_in, cote_in)
+            st.session_state.last_res = res
+            st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
 with col_out:
     r = st.session_state.last_res
     if r:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-        st.markdown(f"<h2 style='text-align:center; color:#ff0066;'>{r['signal']}</h2>", unsafe_allow_html=True)
-        
-        # ENTRY TIME (Namboarina eto)
-        st.markdown("<p style='text-align:center; color:#ffffff66; margin-top:20px;'>▸ ENTRY TIME (CORRECTED)</p>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='text-align:center;'>{r['signal']}</h2>", unsafe_allow_html=True)
         st.markdown(f"<div class='entry-time-mega'>{r['entry']}</div>", unsafe_allow_html=True)
-        
-        # PROBABILITY
         st.markdown(f"<div class='prob-mega'>{r['prob']}%</div>", unsafe_allow_html=True)
         
-        # TARGETS
-        c1, c2, c3 = st.columns(3)
-        with c1: st.markdown(f"<div class='target-box'>MIN<br><b style='color:#00ffcc;'>{r['min']}x</b></div>", unsafe_allow_html=True)
-        with c2: st.markdown(f"<div class='target-box'>MOY<br><b style='color:#ffd700;'>{r['moy']}x</b></div>", unsafe_allow_html=True)
-        with c3: st.markdown(f"<div class='target-box'>MAX<br><b style='color:#ff3366;'>{r['max']}x</b></div>", unsafe_allow_html=True)
-        
+        cw, cl = st.columns(2)
+        if cw.button("✅ WIN"):
+            st.session_state.history[-1]['result'] = 'WIN'
+            save_data(st.session_state.history)
+            st.rerun()
+        if cl.button("❌ LOSS"):
+            st.session_state.history[-1]['result'] = 'LOSS'
+            save_data(st.session_state.history)
+            st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-# Footer
-st.markdown("<p style='text-align:center; color:#ffffff18;'>AVIATOR ULTRA V4000 • PROTECTED MODE</p>", unsafe_allow_html=True)
+# History table
+if st.session_state.history:
+    st.markdown("### 📜 LOGS")
+    st.dataframe(pd.DataFrame(st.session_state.history[::-1]).head(10), use_container_width=True)

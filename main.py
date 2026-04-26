@@ -14,7 +14,7 @@ import pickle
 st.set_page_config(
     page_title="aviator ANDR Ultra V2", 
     layout="wide",
-    initial_sidebar_state="expanded"  # Naveriko ho hita ny sidebar eto
+    initial_sidebar_state="expanded"
 )
 
 # ===================== PERSISTENCE =====================
@@ -112,6 +112,14 @@ st.markdown("""
         color: #ff0066;
         text-shadow: 0 0 25px #ff0066;
     }
+
+    .prob-val {
+        font-size: 2.5rem;
+        font-family: 'Orbitron';
+        text-align: center;
+        color: #00ffcc;
+        margin-bottom: 10px;
+    }
     
     .stButton>button {
         background: linear-gradient(135deg, #ff0066, #ff3399) !important;
@@ -153,7 +161,7 @@ if not st.session_state.auth:
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# ===================== ML TRAINING FUNCTION =====================
+# ===================== ML TRAINING =====================
 def train_ml_model():
     labeled = [h for h in st.session_state.history if h.get('result') in ['WIN', 'LOSS']]
     if len(labeled) < 5: return None, None
@@ -172,7 +180,7 @@ def train_ml_model():
         return model, scaler
     except: return None, None
 
-# ===================== SIDEBAR (STATS & TOOLS) =====================
+# ===================== SIDEBAR =====================
 with st.sidebar:
     st.markdown("## 📊 DASHBOARD")
     if st.session_state.history:
@@ -186,27 +194,35 @@ with st.sidebar:
         m, s = train_ml_model()
         if m: 
             st.session_state.ml_model, st.session_state.ml_scaler = m, s
-            st.success("Model Trained!")
+            st.success("Model Updated!")
     
     if st.button("🗑️ RESET ALL DATA"):
         st.session_state.history = []
         if HISTORY_FILE.exists(): HISTORY_FILE.unlink()
         st.rerun()
 
-# ===================== ENGINE =====================
-def run_engine(hex_in, heure_in, cote_in):
+# ===================== ENGINE V4000 =====================
+def run_ultra_engine(hex_in, heure_in, cote_in):
     hex5 = hex_in.strip().lower()[:5]
     combined = f"{hex5}{heure_in}{cote_in}"
-    h_hash = hashlib.md5(combined.encode()).hexdigest()
+    h_hash = hashlib.sha256(combined.encode()).hexdigest()
     np.random.seed(int(h_hash[:8], 16) % (2**32))
     
-    prob = round(float(np.random.uniform(35, 55)), 2)
+    # Algorithm simulation
+    base = 2.10 if cote_in < 2.0 else 1.90
+    sims = np.random.lognormal(np.log(base), 0.22, 100_000)
+    
+    prob = round(float(np.mean(sims >= 3.0)) * 100, 2)
+    t_min = round(float(np.percentile(sims, 25)), 2)
+    t_moy = round(float(np.percentile(sims, 50)), 2)
+    t_max = round(float(np.percentile(sims, 85)), 2)
+    
     now_mg = datetime.now(TZ_MG)
-    entry = (now_mg + timedelta(seconds=40)).strftime("%H:%M:%S")
+    entry = (now_mg + timedelta(seconds=42)).strftime("%H:%M:%S")
     
     res = {
         "id": h_hash[:6], "hex": hex5, "entry": entry, "prob": prob, 
-        "last_cote": cote_in, "result": "PENDING"
+        "min": t_min, "moy": t_moy, "max": t_max, "result": "PENDING", "last_cote": cote_in
     }
     st.session_state.history.append(res)
     save_data(st.session_state.history)
@@ -218,12 +234,12 @@ st.markdown("<div class='main-title'>aviator ANDR Ultra V2</div>", unsafe_allow_
 c_in, c_out = st.columns([1, 2])
 with c_in:
     st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-    h_in = st.text_input("🔐 HEX", placeholder="OH: AC50E")
-    t_in = st.text_input("⏰ TIME", placeholder="OH: 12:05")
-    l_in = st.number_input("📊 LAST COTE", value=1.50)
-    if st.button("🚀 ANALYSER"):
+    h_in = st.text_input("🔐 HEX (Provably)", placeholder="OH: ac50e")
+    t_in = st.text_input("⏰ ORA TEONY", placeholder="OH: 15:30")
+    l_in = st.number_input("📊 COTE TEONY", value=1.88, step=0.01)
+    if st.button("🚀 ANALYSER ULTRA"):
         if h_in and t_in:
-            st.session_state.last_res = run_engine(h_in, t_in, l_in)
+            st.session_state.last_res = run_ultra_engine(h_in, t_in, l_in)
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -232,8 +248,15 @@ with c_out:
     if r:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
         st.markdown(f"<div class='entry-time-mega'>{r['entry']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<h2 style='text-align:center;'>PROB: {r['prob']}%</h2>", unsafe_allow_html=True)
+        st.markdown(f"<div class='prob-val'>{r['prob']}% Probabilité</div>", unsafe_allow_html=True)
         
+        # Naveriko ny COTE MIN, MOY, MAX eto
+        m1, m2, m3 = st.columns(3)
+        m1.metric("TARGET MIN", f"{r['min']}x")
+        m2.metric("TARGET MOY", f"{r['moy']}x")
+        m3.metric("TARGET MAX", f"{r['max']}x")
+        
+        st.markdown("---")
         cw, cl = st.columns(2)
         if cw.button("✅ WIN"):
             for h in st.session_state.history:
@@ -248,5 +271,6 @@ with c_out:
         st.markdown("</div>", unsafe_allow_html=True)
 
 if st.session_state.history:
-    st.markdown("### 📜 HISTORY")
-    st.dataframe(pd.DataFrame(st.session_state.history[-5:][::-1])[['entry', 'prob', 'result']], use_container_width=True)
+    st.markdown("### 📜 RECENT HISTORY")
+    df = pd.DataFrame(st.session_state.history[-5:][::-1])
+    st.dataframe(df[['entry', 'prob', 'min', 'max', 'result']], use_container_width=True, hide_index=True)

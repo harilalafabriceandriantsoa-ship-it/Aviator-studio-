@@ -14,7 +14,7 @@ import pickle
 st.set_page_config(
     page_title="aviator ANDR Ultra V2", 
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"  # Naveriko ho hita ny sidebar eto
 )
 
 # ===================== PERSISTENCE =====================
@@ -69,7 +69,7 @@ st.markdown("""
     
     .main-title {
         font-family: 'Orbitron', sans-serif;
-        font-size: clamp(2rem, 8vw, 3.5rem);
+        font-size: clamp(1.8rem, 7vw, 3rem);
         font-weight: 900;
         text-align: center;
         background: linear-gradient(90deg, #ff0066, #00ffcc);
@@ -82,13 +82,12 @@ st.markdown("""
         background: rgba(10, 0, 25, 0.9);
         border: 2px solid rgba(255, 0, 102, 0.4);
         border-radius: 20px;
-        padding: clamp(15px, 5vw, 25px);
+        padding: 20px;
         backdrop-filter: blur(12px);
         margin-bottom: 20px;
     }
 
-    /* --- PLACEHOLDER SY INPUT STYLE --- */
-    /* Mampiseho ny soratra placeholder ho mainty sy mazava */
+    /* PLACEHOLDER MAINTY TANTERAKA */
     ::placeholder {
         color: #000000 !important;
         opacity: 1 !important;
@@ -96,32 +95,22 @@ st.markdown("""
     }
 
     .stTextInput input, .stNumberInput input {
-        background: rgba(255, 255, 255, 0.9) !important; /* Ambodika fotsy mba ho hita ny mainty */
+        background: rgba(255, 255, 255, 0.95) !important;
         border: 2px solid #ff0066 !important;
-        color: #000000 !important; /* Ny soratra soratanao koa ho mainty */
+        color: #000000 !important;
         border-radius: 12px !important;
-        font-size: 1.1rem !important;
+        font-size: 1rem !important;
         padding: 12px !important;
         font-weight: bold !important;
     }
     
     .entry-time-mega {
         font-family: 'Orbitron', sans-serif;
-        font-size: clamp(3rem, 12vw, 5rem);
+        font-size: clamp(2.5rem, 10vw, 4.5rem);
         font-weight: 900;
         text-align: center;
         color: #ff0066;
-        text-shadow: 0 0 30px #ff0066;
-        margin: 20px 0;
-    }
-    
-    .prob-mega {
-        font-size: clamp(3rem, 10vw, 4.5rem);
-        font-weight: 900;
-        font-family: 'Orbitron';
-        text-align: center;
-        color: #00ffcc;
-        margin: 15px 0;
+        text-shadow: 0 0 25px #ff0066;
     }
     
     .stButton>button {
@@ -129,8 +118,7 @@ st.markdown("""
         color: white !important;
         font-weight: 900 !important;
         border-radius: 12px !important;
-        height: 55px !important;
-        font-size: 1.1rem !important;
+        height: 50px !important;
         border: none !important;
         width: 100%;
     }
@@ -152,14 +140,11 @@ TZ_MG = pytz.timezone("Indian/Antananarivo")
 # ===================== LOGIN =====================
 if not st.session_state.auth:
     st.markdown("<div class='main-title'>aviator ANDR Ultra V2</div>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#ff006699; letter-spacing:0.3em;'>ULTRA X3+ PRECISION</p>", unsafe_allow_html=True)
-    
-    col_a, col_b, col_c = st.columns([1, 1.2, 1])
+    col_a, col_b, col_c = st.columns([1, 1.5, 1])
     with col_b:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-        # Nesorina ny type="password" mba ho hita tsara ny AVIATOR2026 soratanao
-        pw = st.text_input("🔑 PASSWORD", placeholder="SORATY ETO: AVIATOR2026")
-        if st.button("ACTIVATE", use_container_width=True):
+        pw = st.text_input("🔑 PASSWORD", placeholder="AVIATOR2026")
+        if st.button("ACTIVATE"):
             if pw.strip() == "AVIATOR2026":
                 st.session_state.auth = True
                 st.rerun()
@@ -168,30 +153,60 @@ if not st.session_state.auth:
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# ===================== ENGINE V4000 =====================
-def run_andr_ultra_v2(hex_input, last_heure, last_cote):
-    hex5 = hex_input.strip().lower()[:5]
-    combined = f"{hex5}:{last_heure}:{last_cote}"
-    full_hash = hashlib.sha512(combined.encode()).hexdigest()
-    hash_num = int(full_hash[:16], 16)
+# ===================== ML TRAINING FUNCTION =====================
+def train_ml_model():
+    labeled = [h for h in st.session_state.history if h.get('result') in ['WIN', 'LOSS']]
+    if len(labeled) < 5: return None, None
+    X, y = [], []
+    for h in labeled:
+        try:
+            hex_val = int(h['hex'], 16) if h.get('hex') else 0
+            X.append([hex_val % 1000, h['last_cote'], h['prob']])
+            y.append(1 if h['result'] == 'WIN' else 0)
+        except: continue
+    try:
+        scaler = StandardScaler()
+        X_s = scaler.fit_transform(np.array(X))
+        model = GradientBoostingRegressor(n_estimators=100).fit(X_s, np.array(y))
+        save_ml_model(model, scaler)
+        return model, scaler
+    except: return None, None
+
+# ===================== SIDEBAR (STATS & TOOLS) =====================
+with st.sidebar:
+    st.markdown("## 📊 DASHBOARD")
+    if st.session_state.history:
+        wins = sum(1 for h in st.session_state.history if h.get('result') == 'WIN')
+        losses = sum(1 for h in st.session_state.history if h.get('result') == 'LOSS')
+        wr = round(wins/(wins+losses)*100, 1) if (wins+losses)>0 else 0
+        st.metric("WIN RATE", f"{wr}%")
     
-    seed_val = int((hash_num & 0xFFFFFFFFFFFFFFFF) + int(last_cote * 10000))
-    np.random.seed(seed_val % (2**32))
+    st.markdown("---")
+    if st.button("🧠 TRAIN ML MODEL"):
+        m, s = train_ml_model()
+        if m: 
+            st.session_state.ml_model, st.session_state.ml_scaler = m, s
+            st.success("Model Trained!")
     
-    base = 2.15 if last_cote < 1.8 else 1.95
-    sims = np.random.lognormal(np.log(base), 0.20, 100_000)
+    if st.button("🗑️ RESET ALL DATA"):
+        st.session_state.history = []
+        if HISTORY_FILE.exists(): HISTORY_FILE.unlink()
+        st.rerun()
+
+# ===================== ENGINE =====================
+def run_engine(hex_in, heure_in, cote_in):
+    hex5 = hex_in.strip().lower()[:5]
+    combined = f"{hex5}{heure_in}{cote_in}"
+    h_hash = hashlib.md5(combined.encode()).hexdigest()
+    np.random.seed(int(h_hash[:8], 16) % (2**32))
     
-    prob_x3 = round(float(np.mean(sims >= 3.0)) * 100, 2)
-    target_min = round(float(np.percentile(sims, 30)), 2)
-    target_moy = round(float(np.percentile(sims, 50)), 2)
-    target_max = round(float(np.percentile(sims, 80)), 2)
-    
+    prob = round(float(np.random.uniform(35, 55)), 2)
     now_mg = datetime.now(TZ_MG)
-    entry_time = (now_mg + timedelta(seconds=45)).strftime("%H:%M:%S")
+    entry = (now_mg + timedelta(seconds=40)).strftime("%H:%M:%S")
     
     res = {
-        "id": full_hash[:8], "entry": entry_time, "prob": prob_x3,
-        "min": target_min, "moy": target_moy, "max": target_max, "result": "PENDING"
+        "id": h_hash[:6], "hex": hex5, "entry": entry, "prob": prob, 
+        "last_cote": cote_in, "result": "PENDING"
     }
     st.session_state.history.append(res)
     save_data(st.session_state.history)
@@ -200,27 +215,38 @@ def run_andr_ultra_v2(hex_input, last_heure, last_cote):
 # ===================== MAIN UI =====================
 st.markdown("<div class='main-title'>aviator ANDR Ultra V2</div>", unsafe_allow_html=True)
 
-col_in, col_out = st.columns([1, 2], gap="medium")
-with col_in:
+c_in, c_out = st.columns([1, 2])
+with c_in:
     st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-    hex_in = st.text_input("🔐 HEX", placeholder="OH: AC50E")
-    heure_in = st.text_input("⏰ ORA FARANY", placeholder="OH: 16:40")
-    cote_in = st.number_input("📊 COTE FARANY", value=1.88, step=0.01)
-    if st.button("🚀 ANALYSER ULTRA"):
-        if hex_in and heure_in:
-            st.session_state.last_res = run_andr_ultra_v2(hex_in, heure_in, cote_in)
+    h_in = st.text_input("🔐 HEX", placeholder="OH: AC50E")
+    t_in = st.text_input("⏰ TIME", placeholder="OH: 12:05")
+    l_in = st.number_input("📊 LAST COTE", value=1.50)
+    if st.button("🚀 ANALYSER"):
+        if h_in and t_in:
+            st.session_state.last_res = run_engine(h_in, t_in, l_in)
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
-with col_out:
+with c_out:
     r = st.session_state.last_res
     if r:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
         st.markdown(f"<div class='entry-time-mega'>{r['entry']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='prob-mega'>{r['prob']}%</div>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='text-align:center;'>PROB: {r['prob']}%</h2>", unsafe_allow_html=True)
         
-        c1, c2, c3 = st.columns(3)
-        c1.metric("MIN", f"{r['min']}x")
-        c2.metric("MOY", f"{r['moy']}x")
-        c3.metric("MAX", f"{r['max']}x")
+        cw, cl = st.columns(2)
+        if cw.button("✅ WIN"):
+            for h in st.session_state.history:
+                if h['id'] == r['id']: h['result'] = 'WIN'
+            save_data(st.session_state.history)
+            st.rerun()
+        if cl.button("❌ LOSS"):
+            for h in st.session_state.history:
+                if h['id'] == r['id']: h['result'] = 'LOSS'
+            save_data(st.session_state.history)
+            st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
+
+if st.session_state.history:
+    st.markdown("### 📜 HISTORY")
+    st.dataframe(pd.DataFrame(st.session_state.history[-5:][::-1])[['entry', 'prob', 'result']], use_container_width=True)

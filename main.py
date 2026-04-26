@@ -12,16 +12,16 @@ import pickle
 
 # ===================== CONFIGURATION =====================
 st.set_page_config(
-    page_title="AVIATOR ULTRA V4000 X3+", 
+    page_title="aviator ANDR Ultra V2", 
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 # ===================== PERSISTENCE =====================
 try:
-    DATA_DIR = Path(__file__).parent / "aviator_v4000_data"
+    DATA_DIR = Path(__file__).parent / "aviator_andr_ultra_v2_data"
 except:
-    DATA_DIR = Path.cwd() / "aviator_v4000_data"
+    DATA_DIR = Path.cwd() / "aviator_andr_ultra_v2_data"
 
 DATA_DIR.mkdir(exist_ok=True, parents=True)
 HISTORY_FILE = DATA_DIR / "history.json"
@@ -166,19 +166,20 @@ TZ_MG = pytz.timezone("Indian/Antananarivo")
 
 # ===================== LOGIN =====================
 if not st.session_state.auth:
-    st.markdown("<div class='main-title'>AVIATOR V4000</div>", unsafe_allow_html=True)
+    st.markdown("<div class='main-title'>aviator ANDR Ultra V2</div>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; color:#ff006699; letter-spacing:0.3em;'>ULTRA X3+ PRECISION</p>", unsafe_allow_html=True)
     
     col_a, col_b, col_c = st.columns([1, 1.2, 1])
     with col_b:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-        pw = st.text_input("🔑 PASSWORD", type="password", placeholder="AVIATOR2026")
+        pw = st.text_input("🔑 PASSWORD", type="password", placeholder="Ampidiro eto ny tenimiafina...")
         if st.button("ACTIVATE", use_container_width=True):
-            if pw == "AVIATOR2026":
+            # Cacher ny tenimiafina ety ivelany mampiasa SHA-256 (Mbola "AVIATOR2026" ihany no ampidirina)
+            if hashlib.sha256(pw.encode()).hexdigest() == "396181f0bd24e8a156e50e932ec1a1e4839f972b94e772b1dcbdb24d3ab79e67":
                 st.session_state.auth = True
                 st.rerun()
             else:
-                st.error("❌ Incorrect")
+                st.error("❌ Diso ny tenimiafina")
         st.markdown("</div>", unsafe_allow_html=True)
     
     st.markdown("""
@@ -222,7 +223,7 @@ def train_ml_model():
     except: return None, None
 
 # ===================== ULTRA ENGINE V4000 =====================
-def run_ultra_v4000(hex_input, last_heure, last_cote):
+def run_andr_ultra_v2(hex_input, last_heure, last_cote):
     hex5 = hex_input.strip().lower()[:5]
     combined = f"{hex5}:{last_heure}:{last_cote}"
     full_hash = hashlib.sha512(combined.encode()).hexdigest()
@@ -282,7 +283,7 @@ def run_ultra_v4000(hex_input, last_heure, last_cote):
     return res
 
 # ===================== MAIN UI =====================
-st.markdown("<div class='main-title'>AVIATOR V4000</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-title'>aviator ANDR Ultra V2</div>", unsafe_allow_html=True)
 
 with st.sidebar:
     st.markdown("### 📊 STATS")
@@ -304,12 +305,12 @@ with st.sidebar:
 col_in, col_out = st.columns([1, 2], gap="medium")
 with col_in:
     st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-    hex_in = st.text_input("🔐 HEX (5 chars)", placeholder="ac50e")
-    heure_in = st.text_input("⏰ LAST HEURE", placeholder="20:22")
+    hex_in = st.text_input("🔐 HEX (5 chars)", placeholder="Ampidiro eto ny HEX (oh: ac50e)")
+    heure_in = st.text_input("⏰ LAST HEURE", placeholder="Ampidiro ny ora farany (oh: 20:22)")
     cote_in = st.number_input("📊 LAST COTE", value=1.88, step=0.01)
     if st.button("🚀 ANALYSER ULTRA"):
         if hex_in and heure_in:
-            st.session_state.last_res = run_ultra_v4000(hex_in, heure_in, cote_in)
+            st.session_state.last_res = run_andr_ultra_v2(hex_in, heure_in, cote_in)
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 

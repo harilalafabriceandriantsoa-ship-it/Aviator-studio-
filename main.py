@@ -113,13 +113,22 @@ st.markdown("""
         margin: 20px 0;
     }
     
+    .prob-mega {
+        font-size: clamp(3rem, 10vw, 4.5rem);
+        font-weight: 900;
+        font-family: 'Orbitron';
+        text-align: center;
+        color: #00ffcc;
+        margin: 15px 0;
+    }
+    
     .stButton>button {
         background: linear-gradient(135deg, #ff0066, #ff3399) !important;
         color: white !important;
         font-weight: 900 !important;
         border-radius: 12px !important;
         height: 55px !important;
-        font-size: 1rem !important;
+        font-size: 1.1rem !important;
         border: none !important;
         width: 100%;
     }
@@ -141,18 +150,20 @@ TZ_MG = pytz.timezone("Indian/Antananarivo")
 # ===================== LOGIN =====================
 if not st.session_state.auth:
     st.markdown("<div class='main-title'>aviator ANDR Ultra V2</div>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#ff006699; letter-spacing:0.3em;'>ULTRA X3+ PRECISION</p>", unsafe_allow_html=True)
     
     col_a, col_b, col_c = st.columns([1, 1.2, 1])
     with col_b:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-        pw = st.text_input("🔑 PASSWORD", type="password", placeholder="TENIMIAFINA ETO...")
+        # Nesoriko ny type="password" mba ho hitanao tsara izay soratanao fa tsy ho diso intsony
+        pw = st.text_input("🔑 PASSWORD", placeholder="SORATY ETO: AVIATOR2026")
         if st.button("ACTIVATE", use_container_width=True):
-            # Ny tenimiafina dia: AVIATOR2026
-            if hashlib.sha256(pw.encode()).hexdigest() == "396181f0bd24e8a156e50e932ec1a1e4839f972b94e772b1dcbdb24d3ab79e67":
+            # Password: AVIATOR2026
+            if pw.strip() == "AVIATOR2026":
                 st.session_state.auth = True
                 st.rerun()
             else:
-                st.error("❌ Diso ny tenimiafina")
+                st.error("❌ Diso ny tenimiafina. Hamarino ny elanelana (space).")
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
@@ -204,8 +215,7 @@ def run_andr_ultra_v2(hex_input, last_heure, last_cote):
     res = {
         "id": full_hash[:8], "hex": hex5, "last_heure": last_heure, "last_cote": last_cote,
         "entry": entry_time, "signal": signal, "prob": prob_x3, "conf": conf, "strength": strength,
-        "min": round(float(np.percentile(sims, 30)), 2), "moy": round(float(np.percentile(sims, 50)), 2), 
-        "max": round(float(np.percentile(sims, 85)), 2), "result": "PENDING"
+        "result": "PENDING"
     }
     st.session_state.history.append(res)
     save_data(st.session_state.history)
@@ -217,9 +227,9 @@ st.markdown("<div class='main-title'>aviator ANDR Ultra V2</div>", unsafe_allow_
 col_in, col_out = st.columns([1, 2], gap="medium")
 with col_in:
     st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-    hex_in = st.text_input("🔐 HEX", placeholder="HEX 5 chars...")
-    heure_in = st.text_input("⏰ ORA", placeholder="HH:MM...")
-    cote_in = st.number_input("📊 LAST COTE", value=1.88, step=0.01)
+    hex_in = st.text_input("🔐 HEX (Provably)", placeholder="HEX 5 chars...")
+    heure_in = st.text_input("⏰ ORA FARANY", placeholder="Ora teo...")
+    cote_in = st.number_input("📊 COTE FARANY", value=1.88, step=0.01)
     if st.button("🚀 ANALYSER"):
         if hex_in and heure_in:
             st.session_state.last_res = run_andr_ultra_v2(hex_in, heure_in, cote_in)
@@ -250,4 +260,5 @@ with col_out:
 if st.session_state.history:
     st.markdown("---")
     df = pd.DataFrame(st.session_state.history[-5:][::-1])
-    st.dataframe(df[['entry', 'prob', 'result']], use_container_width=True, hide_index=True)
+    if not df.empty:
+        st.dataframe(df[['entry', 'prob', 'result']], use_container_width=True, hide_index=True)

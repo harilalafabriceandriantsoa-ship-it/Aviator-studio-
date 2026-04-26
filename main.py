@@ -87,7 +87,6 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
-    /* PLACEHOLDER MAINTY TANTERAKA */
     ::placeholder {
         color: #000000 !important;
         opacity: 1 !important;
@@ -120,7 +119,6 @@ st.markdown("""
         border-radius: 12px !important;
         height: 50px !important;
         border: none !important;
-        width: 100%;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -144,7 +142,7 @@ if not st.session_state.auth:
     with col_b:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
         pw = st.text_input("🔑 PASSWORD", placeholder="AVIATOR2026")
-        if st.button("ACTIVATE"):
+        if st.button("ACTIVATE", use_container_width=True):
             if pw.strip() == "AVIATOR2026":
                 st.session_state.auth = True
                 st.rerun()
@@ -152,6 +150,43 @@ if not st.session_state.auth:
                 st.error("❌ Diso ny tenimiafina")
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
+
+# ===================== ML TRAINING LOGIC =====================
+def train_ml_model():
+    # Ny ML dia mila valiny (result) WIN na LOSS vao afaka mianatra
+    labeled = [h for h in st.session_state.history if h.get('result') in ['WIN', 'LOSS']]
+    
+    if len(labeled) < 5:
+        st.sidebar.warning("Mila WIN/LOSS 5 farafahakeliny vao afaka mampiofana (train) ny ML.")
+        return None, None
+    
+    X, y = [], []
+    for h in labeled:
+        try:
+            # Manova hex ho isa azo ianarana
+            hex_val = int(h.get('hex', '0'), 16)
+            # Ireo "Features" hianaran'ny AI
+            X.append([
+                hex_val % 1000, 
+                h.get('last_cote', 1.0), 
+                h.get('prob', 0.0),
+                h.get('min', 0.0)
+            ])
+            # Ny tanjona (Target): WIN=1, LOSS=0
+            y.append(1 if h['result'] == 'WIN' else 0)
+        except: continue
+        
+    try:
+        scaler = StandardScaler()
+        X_s = scaler.fit_transform(np.array(X))
+        # Gradient Boosting Regressor ho an'ny fahamendrehana ambony
+        model = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, max_depth=3)
+        model.fit(X_s, np.array(y))
+        save_ml_model(model, scaler)
+        return model, scaler
+    except Exception as e:
+        st.sidebar.error(f"Error Training: {e}")
+        return None, None
 
 # ===================== SIDEBAR =====================
 with st.sidebar:
@@ -163,7 +198,14 @@ with st.sidebar:
         st.metric("WIN RATE", f"{wr}%")
     
     st.markdown("---")
-    if st.button("🗑️ RESET ALL DATA"):
+    # BOUTON HO AN'NY ML TRAINING
+    if st.button("🧠 TRAIN ML MODEL", use_container_width=True):
+        m, s = train_ml_model()
+        if m: 
+            st.session_state.ml_model, st.session_state.ml_scaler = m, s
+            st.success("ML Model Updated! ✅")
+            
+    if st.button("🗑️ RESET ALL DATA", use_container_width=True):
         st.session_state.history = []
         if HISTORY_FILE.exists(): HISTORY_FILE.unlink()
         st.rerun()
@@ -179,6 +221,16 @@ def run_ultra_engine(hex_in, heure_in, cote_in):
     sims = np.random.lognormal(np.log(base), 0.22, 100_000)
     
     prob = round(float(np.mean(sims >= 3.0)) * 100, 2)
+    
+    # ML Prediction Boost (raha efa vita train ilay model)
+    if st.session_state.ml_model is not None:
+        try:
+            h_val = int(hex5, 16)
+            feat = st.session_state.ml_scaler.transform([[h_val % 1000, cote_in, prob, 0.0]])
+            boost = st.session_state.ml_model.predict(feat)[0]
+            prob = min(99.9, prob + (boost * 5))
+        except: pass
+
     t_min = round(float(np.percentile(sims, 25)), 2)
     t_moy = round(float(np.percentile(sims, 50)), 2)
     t_max = round(float(np.percentile(sims, 85)), 2)
@@ -187,14 +239,9 @@ def run_ultra_engine(hex_in, heure_in, cote_in):
     entry = (now_mg + timedelta(seconds=42)).strftime("%H:%M:%S")
     
     res = {
-        "id": h_hash[:6], 
-        "hex": hex5, 
-        "entry": entry, 
-        "prob": prob, 
-        "min": t_min, 
-        "moy": t_moy, 
-        "max": t_max, 
-        "result": "PENDING"
+        "id": h_hash[:6], "hex": hex5, "entry": entry, "prob": prob, 
+        "min": t_min, "moy": t_moy, "max": t_max, 
+        "result": "PENDING", "last_cote": cote_in
     }
     st.session_state.history.append(res)
     save_data(st.session_state.history)
@@ -209,7 +256,7 @@ with c_in:
     h_in = st.text_input("🔐 HEX", placeholder="OH: ac50e")
     t_in = st.text_input("⏰ ORA", placeholder="OH: 15:30")
     l_in = st.number_input("📊 LAST COTE", value=1.88, step=0.01)
-    if st.button("🚀 ANALYSER ULTRA"):
+    if st.button("🚀 ANALYSER ULTRA", use_container_width=True):
         if h_in and t_in:
             st.session_state.last_res = run_ultra_engine(h_in, t_in, l_in)
             st.rerun()
@@ -222,7 +269,6 @@ with c_out:
         st.markdown(f"<div class='entry-time-mega'>{r.get('entry', '00:00:00')}</div>", unsafe_allow_html=True)
         st.markdown(f"<h3 style='text-align:center;'>PROB: {r.get('prob', 0)}%</h3>", unsafe_allow_html=True)
         
-        # FIANTSOANA NY COTE (mampiasa .get mba tsy hisy error)
         m1, m2, m3 = st.columns(3)
         m1.metric("TARGET MIN", f"{r.get('min', 0)}x")
         m2.metric("TARGET MOY", f"{r.get('moy', 0)}x")
@@ -230,12 +276,12 @@ with c_out:
         
         st.markdown("---")
         cw, cl = st.columns(2)
-        if cw.button("✅ WIN"):
+        if cw.button("✅ WIN", use_container_width=True):
             for h in st.session_state.history:
                 if h['id'] == r['id']: h['result'] = 'WIN'
             save_data(st.session_state.history)
             st.rerun()
-        if cl.button("❌ LOSS"):
+        if cl.button("❌ LOSS", use_container_width=True):
             for h in st.session_state.history:
                 if h['id'] == r['id']: h['result'] = 'LOSS'
             save_data(st.session_state.history)
@@ -244,7 +290,6 @@ with c_out:
 
 if st.session_state.history:
     st.markdown("### 📜 HISTORY")
-    # Fanamarihana: raha misy banga ny data taloha dia soloina 0
     df = pd.DataFrame(st.session_state.history[-5:][::-1])
     cols = ['entry', 'prob', 'min', 'max', 'result']
     for c in cols:

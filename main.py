@@ -87,20 +87,14 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* STYLE HO AN'NY PLACEHOLDER HO MAINTY */
     ::placeholder {
         color: #000000 !important;
-        opacity: 1 !important; /* Mba tsy ho mangarahara */
+        opacity: 1 !important;
         font-weight: bold !important;
     }
 
-    /* Ho an'ny navigateur samihafa */
-    ::-webkit-input-placeholder { color: #000000 !important; opacity: 1 !important; font-weight: bold !important; }
-    ::-moz-placeholder { color: #000000 !important; opacity: 1 !important; font-weight: bold !important; }
-    :-ms-input-placeholder { color: #000000 !important; opacity: 1 !important; font-weight: bold !important; }
-    
     .stTextInput input, .stNumberInput input {
-        background: rgba(255, 255, 255, 0.9) !important; /* Natao fotsy kely ny background mba hisongadina ny mainty */
+        background: rgba(255, 255, 255, 0.9) !important;
         border: 2px solid rgba(255, 0, 102, 0.6) !important;
         color: #000000 !important;
         border-radius: 12px !important;
@@ -119,15 +113,6 @@ st.markdown("""
         margin: 20px 0;
     }
     
-    .prob-mega {
-        font-size: clamp(3rem, 10vw, 4.5rem);
-        font-weight: 900;
-        font-family: 'Orbitron';
-        text-align: center;
-        color: #00ffcc;
-        margin: 15px 0;
-    }
-    
     .stButton>button {
         background: linear-gradient(135deg, #ff0066, #ff3399) !important;
         color: white !important;
@@ -137,15 +122,6 @@ st.markdown("""
         font-size: 1rem !important;
         border: none !important;
         width: 100%;
-    }
-    
-    @media (max-width: 768px) {
-        .stApp {
-            padding: 10px !important;
-        }
-        .glass-card {
-            padding: 15px !important;
-        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -160,35 +136,24 @@ if "last_res" not in st.session_state:
 if "ml_model" not in st.session_state:
     st.session_state.ml_model, st.session_state.ml_scaler = load_ml_model()
 
-# ===================== TIMEZONE MADAGASCAR =====================
 TZ_MG = pytz.timezone("Indian/Antananarivo")
 
 # ===================== LOGIN =====================
 if not st.session_state.auth:
     st.markdown("<div class='main-title'>aviator ANDR Ultra V2</div>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#ff006699; letter-spacing:0.3em;'>ULTRA X3+ PRECISION</p>", unsafe_allow_html=True)
     
     col_a, col_b, col_c = st.columns([1, 1.2, 1])
     with col_b:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-        pw = st.text_input("🔑 PASSWORD", type="password", placeholder="Ampidiro ny tenimiafina...")
+        pw = st.text_input("🔑 PASSWORD", type="password", placeholder="TENIMIAFINA ETO...")
         if st.button("ACTIVATE", use_container_width=True):
+            # Ny tenimiafina dia: AVIATOR2026
             if hashlib.sha256(pw.encode()).hexdigest() == "396181f0bd24e8a156e50e932ec1a1e4839f972b94e772b1dcbdb24d3ab79e67":
                 st.session_state.auth = True
                 st.rerun()
             else:
                 st.error("❌ Diso ny tenimiafina")
         st.markdown("</div>", unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class='glass-card' style='max-width:800px; margin:40px auto;'>
-        <h2 style='color:#ff0066; text-align:center;'>📖 FANAZAVANA MALAGASY</h2>
-        <h3 style='color:#00ffcc; margin-top:20px;'>🎯 ZAVATRA ILAINA (3):</h3>
-        <p><b>1. HEX:</b> 5 caractères voalohany @ SHA512 hash hitanao @ Provably Fair.</p>
-        <p><b>2. LAST HEURE:</b> Ora tamin'ny round TALOHA vita tsara.</p>
-        <p><b>3. LAST COTE:</b> Résultat tamin'ny round TALOHA (ex: 1.88).</p>
-    </div>
-    """, unsafe_allow_html=True)
     st.stop()
 
 # ===================== ML TRAINING =====================
@@ -252,9 +217,9 @@ st.markdown("<div class='main-title'>aviator ANDR Ultra V2</div>", unsafe_allow_
 col_in, col_out = st.columns([1, 2], gap="medium")
 with col_in:
     st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-    hex_in = st.text_input("🔐 HEX", placeholder="Ampidiro ny HEX eto...")
-    heure_in = st.text_input("⏰ ORA FARANY", placeholder="Ampidiro ny ORA eto...")
-    cote_in = st.number_input("📊 COTE FARANY", value=1.88, step=0.01)
+    hex_in = st.text_input("🔐 HEX", placeholder="HEX 5 chars...")
+    heure_in = st.text_input("⏰ ORA", placeholder="HH:MM...")
+    cote_in = st.number_input("📊 LAST COTE", value=1.88, step=0.01)
     if st.button("🚀 ANALYSER"):
         if hex_in and heure_in:
             st.session_state.last_res = run_andr_ultra_v2(hex_in, heure_in, cote_in)

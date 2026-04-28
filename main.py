@@ -49,8 +49,24 @@ st.markdown("""
 .mv{font-size:1.4rem;font-weight:900;font-family:'Orbitron';color:#ff0066}
 .stButton>button{background:linear-gradient(135deg,#ff0066,#ff3399)!important;color:#fff!important;font-weight:900!important;border-radius:11px!important;height:52px!important;border:none!important;width:100%!important;transition:all .2s!important}
 .stButton>button:hover{transform:scale(1.02);box-shadow:0 0 22px rgba(255,0,102,.5)!important}
-.stTextInput input,.stNumberInput input{background:rgba(255,0,102,.04)!important;border:2px solid rgba(255,0,102,.22)!important;color:#e0fbfc!important;border-radius:11px!important;font-size:.9rem!important;padding:10px 13px!important}
-.stTextInput input:focus,.stNumberInput input:focus{border-color:rgba(255,0,102,.65)!important;box-shadow:0 0 12px rgba(255,0,102,.18)!important}
+
+/* INPUT SETTINGS: Mazava tsara ny soratra */
+.stTextInput input, .stNumberInput input {
+    background: rgba(0,0,0,0.8) !important;
+    border: 2px solid rgba(255,0,102,0.6) !important;
+    color: #ffffff !important;
+    border-radius: 11px !important;
+    font-size: 1rem !important;
+    padding: 10px 13px !important;
+    opacity: 1 !important;
+}
+
+/* Placeholder mazava tsara (tsy transparent) */
+::placeholder {
+    color: rgba(255, 255, 255, 0.9) !important;
+    opacity: 1 !important;
+}
+
 .stSelectbox>div>div,.stSelectbox>div>div>div{background:rgba(255,0,102,.04)!important;border:2px solid rgba(255,0,102,.22)!important;border-radius:11px!important;color:#e0fbfc!important}
 @media(max-width:768px){.glass{padding:11px!important}}
 </style>
@@ -115,11 +131,10 @@ def run_engine(hex5, last_heure, last_cote):
     h_num  = int(h_hex[:16], 16)
     np.random.seed(h_num % (2**32))
 
-    # Interval
     if last_cote < 1.5:   base,sigma = 2.12,0.24
     elif last_cote < 2.5: base,sigma = 2.06,0.21
     elif last_cote < 3.5: base,sigma = 2.00,0.19
-    else:                 base,sigma = 1.96,0.18
+    else:                  base,sigma = 1.96,0.18
     base  += (h_num % 180) / 1200
     sigma -= last_cote * 0.0022
 
@@ -128,36 +143,23 @@ def run_engine(hex5, last_heure, last_cote):
     p3_5 = round(float(np.mean(sims>=3.5))*100, 2)
     p4   = round(float(np.mean(sims>=4.0))*100, 2)
 
-    # Targets
     tmin = max(2.00, round(float(np.percentile(sims,30)),2))
     tmoy = max(2.60, round(float(np.percentile(sims,50)),2))
     sx3  = sims[sims>=3.0]
     tmax = max(3.00, round(float(np.percentile(sx3,85)),2)) if len(sx3)>0 else 3.80
 
-    # Markov
     hot_p, cold_p, cur_state = markov_predict(st.session_state.history, last_cote)
     markov_boost = (hot_p - 0.5) * 20
 
-    # Bayesian
     bayes_prob = bayesian_x3_prob(st.session_state.history, p3 + markov_boost)
 
-    # Strength
-    strength = round(
-        bayes_prob*0.50 + p3_5*0.20 + p4*0.10 +
-        (h_num%200)/12 + hot_p*15
-    , 1)
+    strength = round(bayes_prob*0.50 + p3_5*0.20 + p4*0.10 + (h_num%200)/12 + hot_p*15, 1)
     strength = max(30.0, min(99.0, strength))
 
-    # Entry time from NOW
     now_mg     = datetime.now(TZ)
-    hash_shift = (h_num%90) - 45
-    str_bonus  = int(strength*0.35)
-    cote_fac   = int(last_cote*4)
-    prob_pen   = int((48-bayes_prob)*0.45)
-    shift      = max(20, min(110, 48+hash_shift+str_bonus+cote_fac-prob_pen))
+    shift      = max(20, min(110, 48+(h_num%90)-45+int(strength*0.35)+int(last_cote*4)-int((48-bayes_prob)*0.45)))
     entry      = (now_mg + timedelta(seconds=shift)).strftime("%H:%M:%S")
 
-    # Signal dynamique
     if strength>=88 and bayes_prob>=44:   sig,sc = "💎💎💎 ULTRA X3+","sig-ultra"
     elif strength>=76 and bayes_prob>=36: sig,sc = "🔥🔥 STRONG X3+","sig-strong"
     elif strength>=62 and bayes_prob>=28: sig,sc = "🟢 GOOD X3+","sig-strong"
@@ -182,7 +184,7 @@ if not st.session_state.auth:
     _,cb,_ = st.columns([1,1.2,1])
     with cb:
         st.markdown("<div class='glass'>", unsafe_allow_html=True)
-        pw = st.text_input("🔑 PASSWORD", type="password", placeholder="AVIATOR2026")
+        pw = st.text_input("🔑 PASSWORD", type="password", placeholder="SORATY_ETO_NY_PASSWORD")
         if st.button("ACTIVER", use_container_width=True):
             if pw=="AVIATOR2026": st.session_state.auth=True; st.rerun()
             else: st.error("❌ Diso")
@@ -216,23 +218,15 @@ with st.sidebar:
 # MAIN
 # ============================================================
 st.markdown("<div class='ttl'>✈️ AVIATOR V5 BAYES</div>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center;color:#ff006699;letter-spacing:.2em;margin-bottom:1rem;'>MARKOV + BAYESIAN • X3+ ULTRA</p>", unsafe_allow_html=True)
 
 ci,co = st.columns([1,2], gap="medium")
 
 with ci:
     st.markdown("<div class='glass'>", unsafe_allow_html=True)
     st.markdown("### 📥 INPUT DATA")
-    
-    # 1. HEX Placeholder: Niova ho "ADIKAO_SHA512_ETO"
-    hex5   = st.text_input("🔐 HEX (5 chars SHA512)", placeholder="ADIKAO_SHA512_ETO")
-    
-    # 2. HEURE Placeholder: Niova ho "ORA_SY_MINITRA"
-    heure  = st.text_input("⏰ LAST HEURE (HH:MM)",   placeholder="ORA:MINITRA")
-    
-    # 3. LAST COTE Value: Napetraka ho 0.00 mba hanerena anao hanova azy
-    lcote  = st.number_input("📊 LAST COTE", value=0.00, step=0.01, format="%.2f")
-    
+    hex5   = st.text_input("🔐 HEX (SHA512)", placeholder="APETAHO_ETO_NY_HEX")
+    heure  = st.text_input("⏰ LAST HEURE",   placeholder="ORA:MINITRA (HH:MM)")
+    lcote  = st.number_input("📊 LAST COTE", value=1.00, step=0.01, format="%.2f")
     st.markdown("</div>", unsafe_allow_html=True)
     if st.button("🚀 ANALYSER", use_container_width=True):
         if hex5 and heure and lcote > 0:
@@ -242,7 +236,7 @@ with ci:
             if len(st.session_state.history)>200: st.session_state.history.pop(0)
             save_json(HISTORY_FILE, st.session_state.history)
             st.session_state.ck+=1; st.rerun()
-        else: st.error("FENOY_DAHOLO_NY_INPUT")
+        else: st.error("FENOY DAHOLO NY INPUT")
 
 with co:
     r=st.session_state.result
@@ -252,30 +246,20 @@ with co:
         st.markdown("<p style='text-align:center;color:#ffffff55;margin-top:16px;font-size:.75rem;'>▸ ENTRY TIME</p>", unsafe_allow_html=True)
         st.markdown(f"<div class='entry'>{r['entry']}</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='prob'>{r['p3']}%</div>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center;color:#ffffff55;font-size:.72rem;'>X3+ BAYESIAN PROB</p>", unsafe_allow_html=True)
-
-        # Markov state
+        
         st.markdown(f"""
         <div style='display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:10px 0;'>
-            <span style='background:rgba(255,0,102,.1);border:1px solid rgba(255,0,102,.3);border-radius:8px;padding:4px 12px;font-size:.82rem;'>
+            <span style='background:rgba(255,0,102,0.2);border:1px solid rgba(255,0,102,0.4);border-radius:8px;padding:4px 12px;font-size:0.9rem;color:#ffffff;'>
             🔄 MARKOV: <b>{r['cur_state']}</b></span>
-            <span style='background:rgba(0,255,204,.1);border:1px solid rgba(0,255,204,.3);border-radius:8px;padding:4px 12px;font-size:.82rem;'>
+            <span style='background:rgba(0,255,204,0.2);border:1px solid rgba(0,255,204,0.4);border-radius:8px;padding:4px 12px;font-size:0.9rem;color:#ffffff;'>
             🔥 HOT PROB: <b>{r['hot_p']}%</b></span>
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown(f"""
-        <div style='display:flex;gap:10px;justify-content:center;margin:8px 0;'>
-            <div style='text-align:center;'><div style='font-size:1.3rem;font-weight:700;color:#ff3399;'>{r['p3_5']}%</div><div style='font-size:.65rem;color:#ffffff55;'>X3.5+</div></div>
-            <div style='text-align:center;'><div style='font-size:1.3rem;font-weight:700;color:#ff6699;'>{r['p4']}%</div><div style='font-size:.65rem;color:#ffffff55;'>X4+</div></div>
-            <div style='text-align:center;'><div style='font-size:1.3rem;font-weight:700;color:#00ffcc;'>{r['strength']}</div><div style='font-size:.65rem;color:#ffffff55;'>STRENGTH</div></div>
-        </div>
-        """, unsafe_allow_html=True)
-
         c1,c2,c3 = st.columns(3)
-        with c1: st.markdown(f"<div class='tbox'><div style='font-size:.65rem;color:#ffffff55;'>MIN</div><div class='tv' style='color:#00ffcc;'>{r['tmin']}×</div></div>", unsafe_allow_html=True)
-        with c2: st.markdown(f"<div class='tbox'><div style='font-size:.65rem;color:#ffffff55;'>MOYEN</div><div class='tv' style='color:#ffd700;'>{r['tmoy']}×</div></div>", unsafe_allow_html=True)
-        with c3: st.markdown(f"<div class='tbox'><div style='font-size:.65rem;color:#ffffff55;'>MAX</div><div class='tv' style='color:#ff3366;'>{r['tmax']}×</div></div>", unsafe_allow_html=True)
+        with c1: st.markdown(f"<div class='tbox'><div style='color:#ffffff55;'>MIN</div><div class='tv' style='color:#00ffcc;'>{r['tmin']}×</div></div>", unsafe_allow_html=True)
+        with c2: st.markdown(f"<div class='tbox'><div style='color:#ffffff55;'>MOYEN</div><div class='tv' style='color:#ffd700;'>{r['tmoy']}×</div></div>", unsafe_allow_html=True)
+        with c3: st.markdown(f"<div class='tbox'><div style='color:#ffffff55;'>MAX</div><div class='tv' style='color:#ff3366;'>{r['tmax']}×</div></div>", unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
         cw,cl2=st.columns(2)
@@ -287,7 +271,7 @@ with co:
                     save_json(HISTORY_FILE, st.session_state.history)
                 st.session_state.stats["total"]+=1; st.session_state.stats["wins"]+=1
                 save_json(STATS_FILE,st.session_state.stats)
-                st.success("🎯 Win!"); st.rerun()
+                st.rerun()
         with cl2:
             if st.button("❌ LOSS", use_container_width=True, key="bl"):
                 idx=r.get("hist_idx",-1)
@@ -301,7 +285,7 @@ with co:
     else:
         st.markdown("""<div class='glass' style='min-height:380px;display:flex;align-items:center;justify-content:center;'>
         <div style='text-align:center;'><div style='font-size:3rem;'>✈️</div>
-        <div style='color:#ffffff22;font-family:Orbitron;margin-top:12px;'>EN ATTENTE...</div></div></div>""", unsafe_allow_html=True)
+        <div style='color:#ffffff;font-family:Orbitron;margin-top:12px;'>EN ATTENTE...</div></div></div>""", unsafe_allow_html=True)
 
 if st.session_state.history:
     st.markdown("---")

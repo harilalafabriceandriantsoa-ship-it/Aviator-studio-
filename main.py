@@ -222,20 +222,27 @@ ci,co = st.columns([1,2], gap="medium")
 
 with ci:
     st.markdown("<div class='glass'>", unsafe_allow_html=True)
-    st.markdown("### 📥 INPUT")
-    hex5   = st.text_input("🔐 HEX (5 chars SHA512)", placeholder="ac50e")
-    heure  = st.text_input("⏰ LAST HEURE (HH:MM)",   placeholder="20:22")
-    lcote  = st.number_input("📊 LAST COTE", value=1.88, step=0.01, format="%.2f")
+    st.markdown("### 📥 INPUT DATA")
+    
+    # 1. HEX Placeholder: Niova ho "ADIKAO_SHA512_ETO"
+    hex5   = st.text_input("🔐 HEX (5 chars SHA512)", placeholder="ADIKAO_SHA512_ETO")
+    
+    # 2. HEURE Placeholder: Niova ho "ORA_SY_MINITRA"
+    heure  = st.text_input("⏰ LAST HEURE (HH:MM)",   placeholder="ORA:MINITRA")
+    
+    # 3. LAST COTE Value: Napetraka ho 0.00 mba hanerena anao hanova azy
+    lcote  = st.number_input("📊 LAST COTE", value=0.00, step=0.01, format="%.2f")
+    
     st.markdown("</div>", unsafe_allow_html=True)
     if st.button("🚀 ANALYSER", use_container_width=True):
-        if hex5 and heure:
+        if hex5 and heure and lcote > 0:
             r = run_engine(hex5.strip(), heure.strip(), lcote)
             st.session_state.result=r
             st.session_state.history.append(dict(r))
             if len(st.session_state.history)>200: st.session_state.history.pop(0)
             save_json(HISTORY_FILE, st.session_state.history)
             st.session_state.ck+=1; st.rerun()
-        else: st.error("HEX et HEURE obligatoires")
+        else: st.error("FENOY_DAHOLO_NY_INPUT")
 
 with co:
     r=st.session_state.result

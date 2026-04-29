@@ -33,7 +33,7 @@ TZ = pytz.timezone("Indian/Antananarivo")
 
 st.markdown("""
 <style>
-@import url('[fonts.googleapis.com](https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap)');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap');
 .stApp{background:radial-gradient(ellipse at 50% 0%,#1a0033 0%,#000008 60%,#001a1a 100%);color:#e0fbfc;font-family:'Rajdhani',sans-serif}
 .ttl{font-family:'Orbitron';font-size:clamp(1.8rem,7vw,3rem);font-weight:900;text-align:center;background:linear-gradient(90deg,#ff0066,#ff3399,#00ffcc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:2px}
 .glass{background:rgba(10,0,25,.9);border:2px solid rgba(255,0,102,.4);border-radius:18px;padding:clamp(12px,4vw,22px);backdrop-filter:blur(12px);margin-bottom:16px}
@@ -102,7 +102,6 @@ def cote_to_state(c):
     return "HOT"
 
 def build_markov(history):
-    # Laplace smoothing = 1
     trans = {s: {s2: 1 for s2 in STATES} for s in STATES}
     cotes = [h.get("last_cote", 2.0) for h in history if h.get("last_cote")]
     for i in range(len(cotes) - 1):
@@ -116,7 +115,6 @@ def markov_predict(history, last_cote):
     cur = cote_to_state(last_cote)
     p = matrix[cur]
     hot_prob = p.get("HOT", 0) + p.get("WARM", 0)
-    # Transition matrix entropy (confidence proxy)
     probs = list(p.values())
     entropy = -sum(x * np.log(x + 1e-9) for x in probs) / np.log(len(STATES))
     return hot_prob, cur, round((1 - entropy) * 100, 1)
@@ -126,7 +124,6 @@ def bayesian_update(history, base_prob):
     labeled = [h for h in history if h.get("res") in ["WIN", "LOSS"]]
     if len(labeled) < 3:
         return base_prob
-    # Weighted recent: last 30, more recent = more weight
     recent = labeled[-30:]
     weights = np.linspace(0.5, 1.0, len(recent))
     hits = sum(w for h, w in zip(recent, weights) if h.get("res") == "WIN")
@@ -138,7 +135,6 @@ def bayesian_update(history, base_prob):
 
 # ─── HASH SEED (multi-layer) ──────────────────────────────────────────────────
 def derive_seeds(hex5, last_heure_str, last_cote):
-    """Return 3 independent seeds from layered hashes."""
     base = f"{hex5}:{last_heure_str}:{last_cote}"
     h1 = int(hashlib.sha512(base.encode()).hexdigest()[:16], 16)
     h2 = int(hashlib.sha256(f"{base}:sim".encode()).hexdigest()[:16], 16)
@@ -147,47 +143,27 @@ def derive_seeds(hex5, last_heure_str, last_cote):
 
 # ─── ENTRY TIME (ultra-précis) ────────────────────────────────────────────────
 def compute_entry(seed3, strength, last_cote, bayes_p, history):
-    """
-    Shift calculé en 3 couches :
-      1. Hash déterministe (seed3)
-      2. Ajustement dynamique : strength + cote + bayes
-      3. Correction historique : moyenne des shifts gagnants récents
-    """
     np.random.seed(seed3)
-    # Couche 1 — base hash
-    base_shift = 30 + (seed3 % 50)                         # [30, 79]
-
-    # Couche 2 — dynamique
-    strength_adj = (strength - 50) * 0.30                  # [-15, +14.85]
-    cote_adj     = (last_cote - 2.0) * (-4.5)              # positif si cote faible
-    bayes_adj    = (bayes_p - 50) * 0.18                   # [-3.6, +8.1]
+    base_shift = 30 + (seed3 % 50)
+    strength_adj = (strength - 50) * 0.30
+    cote_adj     = (last_cote - 2.0) * (-4.5)
+    bayes_adj    = (bayes_p - 50) * 0.18
     dynamic      = strength_adj + cote_adj + bayes_adj
-
-    # Couche 3 — correction historique sur les WIN récents
     wins = [h for h in history[-40:] if h.get("res") == "WIN" and h.get("shift_sec")]
     if len(wins) >= 4:
         win_shifts = [h["shift_sec"] for h in wins[-8:]]
         hist_mean  = np.mean(win_shifts)
-        hist_adj   = (hist_mean - base_shift) * 0.25       # tire vers la moyenne gagnante
+        hist_adj   = (hist_mean - base_shift) * 0.25
     else:
         hist_adj = 0.0
-
     raw = base_shift + dynamic + hist_adj
     shift = int(round(max(20, min(98, raw))))
-
     now_mg = datetime.now(TZ)
     entry_dt = now_mg + timedelta(seconds=shift)
     return entry_dt.strftime("%H:%M:%S"), shift
 
 # ─── SIMULATION MONTE CARLO 500K ─────────────────────────────────────────────
 def run_sims(seed1, seed2, last_cote):
-    """
-    Double-pass Monte Carlo :
-      Pass 1 (seed1, 350K) : distribution principale lognormale
-      Pass 2 (seed2, 150K) : distribution tail gamma (rare high multipliers)
-    Résultat fusionné et pondéré.
-    """
-    # Paramètres calibrés par état
     if last_cote < 1.5:
         mu, sigma, gamma_k, gamma_theta = 2.10, 0.26, 2.2, 0.95
     elif last_cote < 2.5:
@@ -196,94 +172,47 @@ def run_sims(seed1, seed2, last_cote):
         mu, sigma, gamma_k, gamma_theta = 2.01, 0.20, 2.6, 1.05
     else:
         mu, sigma, gamma_k, gamma_theta = 1.97, 0.18, 2.8, 1.10
-
-    # Pass 1 — lognormal (masse principale)
     np.random.seed(seed1)
     sims_ln = np.random.lognormal(np.log(mu), max(0.13, sigma), 350_000)
-
-    # Pass 2 — gamma shifted (queue lourde)
     np.random.seed(seed2)
     sims_g = np.random.gamma(gamma_k, gamma_theta, 150_000) + 1.01
-
-    # Fusion pondérée 70/30
-    sims = np.concatenate([sims_ln * 0.70 + sims_g[:350_000] * 0.0,
-                           sims_ln, sims_g])
-    # En pratique : on prend 70% lognormal + 30% gamma
     n_ln = int(500_000 * 0.70)
     n_g  = 500_000 - n_ln
     np.random.seed(seed1 ^ seed2)
     idx_ln = np.random.choice(len(sims_ln), n_ln, replace=False)
     idx_g  = np.random.choice(len(sims_g),  n_g,  replace=False)
     sims   = np.concatenate([sims_ln[idx_ln], sims_g[idx_g]])
-
     return sims
 
 def cote_targets(sims, last_cote, h_num):
-    """Calcul précis des cotes MIN / MOYEN / MAX avec biais hash."""
-    hash_bias = (h_num % 200) / 1800.0   # ±0.11 max
-
-    # MIN  = percentile 28-33 (ajusté par cote)
-    pct_min  = 28 + (last_cote * 1.2)
-    pct_min  = min(pct_min, 40)
+    hash_bias = (h_num % 200) / 1800.0
+    pct_min  = min(28 + (last_cote * 1.2), 40)
     c_min    = max(1.80, round(float(np.percentile(sims, pct_min)) + hash_bias, 2))
-
-    # MOYEN = médiane pondérée [P45-P55]
     c_moyen  = max(2.30, round(float(np.percentile(sims, 50)) + hash_bias * 0.5, 2))
-
-    # MAX   = P82 sur sims >= 3.0 (queue haute ciblée X3+)
     sx3      = sims[sims >= 3.0]
     if len(sx3) > 500:
         c_max = max(3.00, round(float(np.percentile(sx3, 82)) + hash_bias * 1.5, 2))
     else:
         c_max = round(3.20 + hash_bias, 2)
-
     return c_min, c_moyen, c_max
 
 # ─── ENGINE PRINCIPAL ─────────────────────────────────────────────────────────
 def run_engine(hex5, last_heure_str, last_cote):
     seed1, seed2, seed3 = derive_seeds(hex5, last_heure_str, last_cote)
-    h_num = seed1  # référence hash principale
-
-    # Simulations
+    h_num = seed1
     sims = run_sims(seed1, seed2, last_cote)
-
-    # Probabilités brutes
     p3_raw   = round(float(np.mean(sims >= 3.0)) * 100, 2)
     p3_5_raw = round(float(np.mean(sims >= 3.5)) * 100, 2)
     p4_raw   = round(float(np.mean(sims >= 4.0)) * 100, 2)
-
-    # Markov
     hot_p, cur_state, markov_conf = markov_predict(st.session_state.history, last_cote)
-
-    # Bayesian (sur p3 enrichi par Markov)
     p3_enriched = p3_raw + (hot_p - 0.5) * 22
     bayes_p     = bayesian_update(st.session_state.history, p3_enriched)
-
-    # Strength score (composite)
     hash_bonus = (h_num % 180) / 11.0
-    strength = (
-        bayes_p      * 0.42 +
-        p3_5_raw     * 0.22 +
-        p4_raw       * 0.10 +
-        hot_p * 100  * 0.14 +
-        markov_conf  * 0.06 +
-        hash_bonus   * 0.06
-    )
+    strength = (bayes_p * 0.42 + p3_5_raw * 0.22 + p4_raw * 0.10 + hot_p * 14 + markov_conf * 0.06 + hash_bonus * 0.06)
     strength = round(max(30.0, min(99.0, strength)), 1)
-
-    # Cotes min/moyen/max
     tmin, tmoy, tmax = cote_targets(sims, last_cote, h_num)
-
-    # Accuracy score (0-100) pour affichage barre
-    accuracy = round(
-        min(99, (bayes_p * 0.45 + strength * 0.35 + markov_conf * 0.20)), 1
-    )
-
-    # Entry time hyper-ciblé
-    entry, shift_sec = compute_entry(seed3, strength, last_cote, bayes_p,
-                                     st.session_state.history)
-
-    # Signal
+    accuracy = round(min(99, (bayes_p * 0.45 + strength * 0.35 + markov_conf * 0.20)), 1)
+    entry, shift_sec = compute_entry(seed3, strength, last_cote, bayes_p, st.session_state.history)
     if strength >= 88 and bayes_p >= 46:
         sig, sc = "💎💎💎 ULTRA X3+", "sig-u"
     elif strength >= 76 and bayes_p >= 38:
@@ -345,7 +274,6 @@ with st.sidebar:
     c1, c2 = st.columns(2)
     with c1: st.markdown(f"<div class='mbox'><div class='mv'>{w}</div><div style='font-size:.58rem;color:#fff3'>WINS</div></div>", unsafe_allow_html=True)
     with c2: st.markdown(f"<div class='mbox'><div class='mv'>{l}</div><div style='font-size:.58rem;color:#fff3'>LOSS</div></div>", unsafe_allow_html=True)
-    # Accuracy historique
     if tot >= 3:
         st.markdown(f"""
         <div style='margin-top:12px;'>
@@ -374,25 +302,19 @@ ci, co = st.columns([1, 2], gap="medium")
 with ci:
     st.markdown("<div class='glass'>", unsafe_allow_html=True)
     st.markdown("### 📥 AMPIDIRA:")
-    hex5  = st.text_input("🔐 HEX (5 premiers chars SHA512)", placeholder="Ohatra: ac50e  na  7db8e")
-    heure = st.text_input("⏰ LAST HEURE — Ora round TALOHA (HH:MM)", placeholder="Ohatra: 20:22  na  14:35")
-    lcote = st.number_input("📊 LAST COTE — Cote round TALOHA", value=1.88, step=0.01, format="%.2f")
-    st.markdown("""<div class='ibox' style='margin-top:8px;font-size:.82rem;'>
-    💡 <b>V6 ULTRA</b>: Entry = <b>NOW + 3-layer shift</b><br>
-    🔷 Hash seed · Strength · WIN history
-    </div>""", unsafe_allow_html=True)
+    hex5  = st.text_input("🔐 HEX (5 premiers chars SHA512)", placeholder="Ohatra: ac50e")
+    heure = st.text_input("⏰ LAST HEURE (HH:MM)", placeholder="Ohatra: 20:22")
+    lcote = st.number_input("📊 LAST COTE", value=1.88, step=0.01, format="%.2f")
     st.markdown("</div>", unsafe_allow_html=True)
 
     if st.button("🚀 ANALYSER V6", use_container_width=True):
         if hex5 and heure:
-            with st.spinner("⚡ 500k sims · 3-layer entry..."):
+            with st.spinner("⚡ 500k sims..."):
                 r = run_engine(hex5.strip(), heure.strip(), lcote)
             st.session_state.result = r
             st.session_state.history.append(dict(r))
-            if len(st.session_state.history) > 200:
-                st.session_state.history.pop(0)
+            if len(st.session_state.history) > 200: st.session_state.history.pop(0)
             save_json(HISTORY_FILE, st.session_state.history)
-            st.session_state.ck += 1
             st.rerun()
         else:
             st.error("⚠️ HEX sy HEURE ilaina!")
@@ -402,25 +324,57 @@ with co:
     if r:
         st.markdown("<div class='glass'>", unsafe_allow_html=True)
         st.markdown(f"<div class='{r['sig_class']}'>{r['signal']}</div>", unsafe_allow_html=True)
-
-        # Entry time
         st.markdown("<p style='text-align:center;color:#ffffff66;margin-top:16px;font-size:.75rem;'>▸ HEURE D'ENTRÉE — 3-LAYER CALC</p>", unsafe_allow_html=True)
         st.markdown(f"<div class='entry'>{r['entry']}</div>", unsafe_allow_html=True)
         st.markdown(f"""<div style='text-align:center;margin:-8px 0 12px;'>
-        <span style='background:rgba(255,0,102,.1);border:1px solid rgba(255,0,102,.25);
-        border-radius:8px;padding:4px 14px;font-size:.8rem;color:#ff9999;'>
-        ⏱ NOW + {r['shift_sec']}s &nbsp;|&nbsp; 🎯 ACCURACY {r['accuracy']}%</span></div>""",
-        unsafe_allow_html=True)
-
-        # Accuracy bar
-        st.markdown(f"""
-        <div style='margin:0 auto 12px;max-width:340px;'>
-        <div class='acc-bar-wrap'><div class='acc-bar-fill' style='width:{r["accuracy"]}%'></div></div>
+        <span style='background:rgba(255,0,102,.1);border:1px solid rgba(255,0,102,.25);border-radius:8px;padding:4px 14px;font-size:.8rem;color:#ff9999;'>
+        ⏱ NOW + {r['shift_sec']}s &nbsp;|&nbsp; 🎯 ACCURACY {r['accuracy']}%</span></div>""", unsafe_allow_html=True)
+        
+        # NY ANDALANA 426 NO NOZAHANA SY NAHITSY ETO
+        st.markdown(f"""<div style='display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0;'>
+        <span style='background:rgba(255,0,102,.1);border:1px solid rgba(255,0,102,.3);border-radius:8px;padding:4px 11px;font-size:.8rem;'>🔄 {r['cur_state']}</span>
+        <span style='background:rgba(0,255,204,.1);border:1px solid rgba(0,255,204,.3);border-radius:8px;padding:4px 11px;font-size:.8rem;'>🔥 {r['hot_p']}%</span>
+        <span style='background:rgba(255,0,102,.1);border:1px solid rgba(255,0,102,.3);border-radius:8px;padding:4px 11px;font-size:.8rem;'>💪 {r['strength']}</span>
+        <span style='background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.3);border-radius:8px;padding:4px 11px;font-size:.8rem;'>📐 MK {r['markov_conf']}%</span>
         </div>""", unsafe_allow_html=True)
 
-        # Prob principale
-        st.markdown(f"<div class='prob'>{r['p3']}%</div>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center;color:#ffffff55;font-size:.72rem;'>X3+ BAYESIAN PROB</p>", unsafe_allow_html=True)
+        c1, c2, c3 = st.columns(3)
+        with c1: st.markdown(f"<div class='tbox'><div class='tl'>MIN</div><div class='tv' style='color:#00ffcc;'>{r['tmin']}×</div></div>", unsafe_allow_html=True)
+        with c2: st.markdown(f"<div class='tbox'><div class='tl'>MOYEN</div><div class='tv' style='color:#ffd700;'>{r['tmoy']}×</div></div>", unsafe_allow_html=True)
+        with c3: st.markdown(f"<div class='tbox'><div class='tl'>MAX</div><div class='tv' style='color:#ff3366;'>{r['tmax']}×</div></div>", unsafe_allow_html=True)
 
-        # Badges état
-        st.markdown(f"""<div style='display:flex;gap:8px;justify-content:center;f
+        cw, cl2 = st.columns(2)
+        with cw:
+            if st.button("✅ WIN", key="bw"):
+                idx = r.get("hist_idx", -1)
+                if 0 <= idx < len(st.session_state.history):
+                    st.session_state.history[idx]["res"] = "WIN"
+                    save_json(HISTORY_FILE, st.session_state.history)
+                st.session_state.stats["total"] += 1
+                st.session_state.stats["wins"]  += 1
+                save_json(STATS_FILE, st.session_state.stats)
+                st.rerun()
+        with cl2:
+            if st.button("❌ LOSS", key="bl"):
+                idx = r.get("hist_idx", -1)
+                if 0 <= idx < len(st.session_state.history):
+                    st.session_state.history[idx]["res"] = "LOSS"
+                    save_json(HISTORY_FILE, st.session_state.history)
+                st.session_state.stats["total"]  += 1
+                st.session_state.stats["losses"] += 1
+                save_json(STATS_FILE, st.session_state.stats)
+                st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+if st.session_state.history:
+    st.markdown("---")
+    st.markdown("### 📜 LOGS V6")
+    df = pd.DataFrame([{
+        "Entry":    h.get("entry", ""),
+        "Shift":    f"+{h.get('shift_sec', '')}s",
+        "X3%":      h.get("p3", ""),
+        "Acc%":     h.get("accuracy", ""),
+        "State":    h.get("cur_state", ""),
+        "Res":      h.get("res", "PENDING")
+    } for h in reversed(st.session_state.history[-10:])])
+    st.dataframe(df, use_conta

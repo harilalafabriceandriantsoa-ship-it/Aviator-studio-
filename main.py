@@ -27,6 +27,7 @@ def lj(p,d):
 
 TZ = pytz.timezone("Indian/Antananarivo")
 
+# ─── CSS AMBOARINA NY SORATRA (MAINTY STYLÉ) ───
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap');
@@ -51,14 +52,33 @@ CSS = """
 .sv{font-size:1.4rem;font-weight:900;font-family:'Orbitron';color:#ff0066}
 .sl{font-size:.58rem;color:rgba(255,255,255,.35);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
 .ib{background:rgba(0,255,204,.06);border-left:3px solid #00ffcc;border-radius:0 10px 10px 0;padding:12px 16px;margin:8px 0;font-size:.9rem;line-height:1.8}
-.stButton>button{background:linear-gradient(135deg,#ff0066,#cc0055)!important;color:#fff!important;font-weight:900!important;border-radius:12px!important;height:52px!important;border:none!important;width:100%!important;font-family:'Rajdhani'!important;font-size:.95rem!important;letter-spacing:.04em!important;transition:all .2s!important}
+.stButton>button{background:linear-gradient(135deg,#ff0066,#cc0055)!important;color:#fff!important;font-weight:900!important;border-radius:12px!important;height:52px!important;border:none!important;width:100!important;font-family:'Rajdhani'!important;font-size:.95rem!important;letter-spacing:.04em!important;transition:all .2s!important}
 .stButton>button:hover{transform:scale(1.02);box-shadow:0 0 24px rgba(255,0,102,.5)!important}
-.stTextInput label,.stNumberInput label{color:#ffaacc!important;font-weight:700!important;font-size:.88rem!important;font-family:'Rajdhani'!important}
-.stTextInput input{background:rgba(255,255,255,.1)!important;border:2px solid rgba(255,0,102,.5)!important;color:#fff!important;border-radius:11px!important;font-size:.95rem!important;padding:11px 14px!important;font-family:'Rajdhani'!important}
-.stTextInput input::placeholder{color:rgba(255,255,255,.6)!important;font-style:italic!important}
-.stTextInput input:focus{border-color:#ff0066!important;box-shadow:0 0 14px rgba(255,0,102,.3)!important;background:rgba(255,255,255,.14)!important}
-.stNumberInput input{background:rgba(255,255,255,.1)!important;border:2px solid rgba(255,0,102,.5)!important;color:#fff!important;border-radius:11px!important;font-size:.95rem!important;padding:11px 14px!important}
-.stNumberInput input:focus{border-color:#ff0066!important;box-shadow:0 0 14px rgba(255,0,102,.3)!important}
+
+/* --- KAJY HO AN'NY INPUT (SORATRA MAINTY SY STYLÉ) --- */
+.stTextInput label, .stNumberInput label {
+    color:#ffaacc!important; 
+    font-weight:700!important; 
+    font-size:.88rem!important;
+}
+.stTextInput input, .stNumberInput input {
+    background: #ffffff !important; /* Fotsy tanteraka ny background */
+    color: #000000 !important; /* Mainty tanteraka ny soratra */
+    border: 2px solid #ff0066 !important;
+    border-radius: 11px !important;
+    font-size: 1rem !important;
+    font-weight: 800 !important; /* Matevina kely */
+    font-family: 'Rajdhani', sans-serif !important;
+    opacity: 1 !important;
+}
+.stTextInput input::placeholder {
+    color: #333333 !important; /* Placeholder somary mainty */
+    opacity: 0.7 !important;
+}
+.stTextInput input:focus {
+    box-shadow: 0 0 15px rgba(255,0,102,0.5) !important;
+    border-color: #00ffcc !important;
+}
 @media(max-width:768px){.card{padding:12px!important}}
 </style>
 """
@@ -123,16 +143,11 @@ def engine(hex5, tin, lc):
     str_=round(bp*0.50+p35*0.20+p4*0.10+(hn%200)/12+(hp/100)*15,1)
     str_=max(30.0,min(99.0,str_))
 
-    # ── HEURE D'ENTRÉE ──
-    # Calculé depuis ORA ANKEHITRINY (Madagascar)
-    # tin = référence taloha (entropy fotsiny)
-    # Shift = hash_shift + strength_bonus + cote_factor - prob_penalty
-    # Range: 15 à 90 secondes depuis maintenant
     now=datetime.now(TZ)
-    hs=(hn%60)-30          # hash variabilité -30..+30
-    sb=int(str_*0.28)      # strength → entry mialoha (fort signal = plus tôt)
-    cf=int(lc*3)           # cote avo → mialoha kely
-    pp=int((48-bp)*0.38)   # prob ambany → miandry
+    hs=(hn%60)-30          
+    sb=int(str_*0.28)      
+    cf=int(lc*3)           
+    pp=int((48-bp)*0.38)   
     shift=max(15,min(90,38+hs+sb+cf-pp))
     ent=(now+timedelta(seconds=shift)).strftime("%H:%M:%S")
 
@@ -158,33 +173,6 @@ if not st.session_state.auth:
             if pw=="AVIATOR2026": st.session_state.auth=True; st.rerun()
             else: st.error("❌ Code incorrect")
         st.markdown("</div>",unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class='card' style='max-width:820px;margin:24px auto;'>
-    <h3 style='color:#00ffcc;font-family:Orbitron;text-align:center;'>📖 FANAZAVANA MALAGASY</h3>
-
-    <div class='ib'><b style='color:#ff0066;'>⏰ INONA NY HEURE D'ENTRÉE?</b><br>
-    = Ora tsara <b>hidirana</b> @ round manaraka<br>
-    = ORA ANKEHITRINY (Madagascar) + SHIFT calculé<br>
-    = <b>TSY mitovy</b> @ "TIME" nampidirina (io = référence taloha fotsiny)<br>
-    Ohatra: Now=20:22:30 + 45sec → Entry=<b style='color:#ff0066;'>20:23:15</b></div>
-
-    <div class='ib'><b style='color:#ff0066;'>📥 ZAVATRA AMPIDIRANA:</b><br>
-    • <b>HEX (5 chars):</b> 5 caractères voalohany @ SHA512 — Ex: <code>ac50e</code><br>
-    • <b>TIME:</b> Ora nilanihan'ny round TALOHA — Ex: <code>20:22:24</code> (référence)<br>
-    • <b>LAST COTE:</b> Cote résultat taloha — Ex: <code>1.88</code></div>
-
-    <div class='ib'><b style='color:#ff0066;'>🎮 DINGANA:</b><br>
-    1. Copy HEX @ Provably Fair → 5 chars voalohany<br>
-    2. Tadidio TIME (ora round taloha) + LAST COTE<br>
-    3. Tsindrio "ANALYSER" → jereo ENTRY TIME<br>
-    4. Milalao @ entry time → Cash out @ targets<br>
-    5. Confirm WIN/LOSS</div>
-
-    <div class='ib'><b style='color:#ff0066;'>⚠️ RAHA EFA LASA ORA:</b><br>
-    Tsindrio indray "ANALYSER" → Entry time vaovao depuis NOW</div>
-    </div>
-    """,unsafe_allow_html=True)
     st.stop()
 
 # ─── SIDEBAR ───
@@ -197,7 +185,6 @@ with st.sidebar:
     c1,c2=st.columns(2)
     with c1: st.markdown(f"<div class='sb'><div class='sv'>{w}</div><div class='sl'>WINS</div></div>",unsafe_allow_html=True)
     with c2: st.markdown(f"<div class='sb'><div class='sv'>{l}</div><div class='sl'>LOSS</div></div>",unsafe_allow_html=True)
-    st.markdown("---")
     if st.button("🗑️ RESET",use_container_width=True):
         st.session_state.H=[];st.session_state.S={"t":0,"w":0,"l":0};st.session_state.R=None
         try:
@@ -215,46 +202,29 @@ ci,co=st.columns([1,2],gap="medium")
 with ci:
     st.markdown("<div class='card'>",unsafe_allow_html=True)
     st.markdown("<p style='font-family:Orbitron;font-size:.85rem;color:#ff0066;margin-bottom:12px;'>📥 PARAMÈTRES</p>",unsafe_allow_html=True)
-    h5=st.text_input("🔐 HEX SHA512 (5 premiers chars)",placeholder="Ex: ac50e  —  5 chars @ SHA512 hash")
-    ti=st.text_input("⏰ TIME ROUND PRÉCÉDENT (HH:MM:SS)",placeholder="Ex: 20:22:24  —  ora round taloha")
-    lc=st.number_input("📊 LAST COTE (résultat précédent)",value=1.88,step=0.01,format="%.2f")
-    if lc<1.5: sl,sc2="🔵 COLD","#4488ff"
-    elif lc<2.5: sl,sc2="⚪ NORMAL","#aaaaaa"
-    elif lc<3.5: sl,sc2="🟡 WARM","#ffcc00"
-    else: sl,sc2="🔴 HOT","#ff3366"
-    st.markdown(f"<div style='text-align:center;margin:8px 0;'><span style='background:rgba(255,255,255,.07);border-radius:8px;padding:4px 14px;color:{sc2};font-size:.85rem;'>{sl}</span></div>",unsafe_allow_html=True)
+    h5=st.text_input("🔐 HEX SHA512",placeholder="Ex: ac50e")
+    ti=st.text_input("⏰ TIME ROUND",placeholder="Ex: 20:22:24")
+    lc=st.number_input("📊 LAST COTE",value=1.88,step=0.01,format="%.2f")
     st.markdown("</div>",unsafe_allow_html=True)
     if st.button("🚀 ANALYSER X3+",use_container_width=True):
         if h5 and ti:
-            with st.spinner("⚡ 400k sims + Markov + Bayesian..."):
+            with st.spinner("⚡ 400k sims..."):
                 r=engine(h5.strip(),ti.strip(),lc)
             st.session_state.R=r
             st.session_state.H.append(dict(r))
-            if len(st.session_state.H)>200: st.session_state.H.pop(0)
-            sj(HF,st.session_state.H); st.session_state.ck+=1; st.rerun()
-        else: st.error("❌ HEX et TIME obligatoires!")
+            sj(HF,st.session_state.H); st.rerun()
 
 with co:
     r=st.session_state.R
     if r:
         st.markdown("<div class='card'>",unsafe_allow_html=True)
         st.markdown(f"<div class='{r['sc']}'>{r['sig']}</div>",unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center;color:rgba(255,255,255,.4);font-size:.75rem;margin-top:16px;'>▸ HEURE D'ENTRÉE</p>",unsafe_allow_html=True)
         st.markdown(f"<div class='etime'>{r['ent']}</div>",unsafe_allow_html=True)
         st.markdown(f"<div class='pct'>{r['bp']}%</div>",unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center;color:rgba(255,255,255,.35);font-size:.7rem;'>PROBABILITÉ X3+ (BAYESIAN)</p>",unsafe_allow_html=True)
-        st.markdown(f"""
-        <div style='text-align:center;margin:12px 0;'>
-        <span class='tag'>🔄 {r['cur']}</span>
-        <span class='tag'>🔥 HOT {r['hp']}%</span>
-        <span class='tag'>💪 STR {r['str']}</span>
-        <span class='tag-g'>X3.5+ {r['p35']}%</span>
-        <span class='tag-g'>X4+ {r['p4']}%</span>
-        </div>""",unsafe_allow_html=True)
         c1,c2,c3=st.columns(3)
-        with c1: st.markdown(f"<div class='tbox'><div class='tl'>MIN SAFE</div><div class='tv' style='color:#00ffcc;'>{r['tmin']}×</div><div class='ta'>70% acc</div></div>",unsafe_allow_html=True)
-        with c2: st.markdown(f"<div class='tbox'><div class='tl'>MOYEN</div><div class='tv' style='color:#ffd700;'>{r['tmoy']}×</div><div class='ta'>50% acc</div></div>",unsafe_allow_html=True)
-        with c3: st.markdown(f"<div class='tbox'><div class='tl'>MAX X3+</div><div class='tv' style='color:#ff3366;'>{r['tmax']}×</div><div class='ta'>X3+ only</div></div>",unsafe_allow_html=True)
+        with c1: st.markdown(f"<div class='tbox'><div class='tl'>MIN SAFE</div><div class='tv' style='color:#00ffcc;'>{r['tmin']}×</div></div>",unsafe_allow_html=True)
+        with c2: st.markdown(f"<div class='tbox'><div class='tl'>MOYEN</div><div class='tv' style='color:#ffd700;'>{r['tmoy']}×</div></div>",unsafe_allow_html=True)
+        with c3: st.markdown(f"<div class='tbox'><div class='tl'>MAX X3+</div><div class='tv' style='color:#ff3366;'>{r['tmax']}×</div></div>",unsafe_allow_html=True)
         st.markdown("<br>",unsafe_allow_html=True)
         cw,cl2=st.columns(2)
         with cw:
@@ -263,7 +233,7 @@ with co:
                 if 0<=idx<len(st.session_state.H):
                     st.session_state.H[idx]["res"]="W"; sj(HF,st.session_state.H)
                 st.session_state.S["t"]+=1; st.session_state.S["w"]+=1
-                sj(SF,st.session_state.S); st.success("🎯 Win!"); st.rerun()
+                sj(SF,st.session_state.S); st.rerun()
         with cl2:
             if st.button("❌ LOSS",use_container_width=True,key="bl"):
                 idx=r.get("hi",-1)
@@ -271,14 +241,11 @@ with co:
                     st.session_state.H[idx]["res"]="L"; sj(HF,st.session_state.H)
                 st.session_state.S["t"]+=1; st.session_state.S["l"]+=1
                 sj(SF,st.session_state.S); st.rerun()
-        st.markdown(f"<p style='text-align:center;color:rgba(255,255,255,.2);font-size:.62rem;margin-top:8px;'>Last cote: {r['lc']}× • 400k sims</p>",unsafe_allow_html=True)
         st.markdown("</div>",unsafe_allow_html=True)
-    else:
-        st.markdown("<div class='card' style='min-height:380px;display:flex;align-items:center;justify-content:center;'><div style='text-align:center;'><div style='font-size:3rem;'>✈️</div><div style='color:rgba(255,255,255,.18);font-family:Orbitron;margin-top:12px;font-size:.9rem;'>AMPIDITRA HEX + TIME<br>TSINDRIO ANALYSER</div></div></div>",unsafe_allow_html=True)
 
 if st.session_state.H:
     st.markdown("---"); st.markdown("### 📜 HISTORIQUE")
-    df=pd.DataFrame([{"Entry":x.get("ent",""),"X3%":x.get("bp",""),"State":x.get("cur",""),"Hot%":x.get("hp",""),"Min":x.get("tmin",""),"Max":x.get("tmax",""),"Res":"WIN" if x.get("res")=="W" else "LOSS" if x.get("res")=="L" else "—"} for x in reversed(st.session_state.H[-10:])])
+    df=pd.DataFrame([{"Entry":x.get("ent",""),"X3%":x.get("bp",""),"Res":"WIN" if x.get("res")=="W" else "LOSS" if x.get("res")=="L" else "—"} for x in reversed(st.session_state.H[-10:])])
     st.dataframe(df,use_container_width=True,hide_index=True)
 
 st.markdown("<div style='text-align:center;margin-top:24px;color:rgba(255,255,255,.1);font-size:.56rem;'>AVIATOR X3 V6 • MARKOV+BAYESIAN • 400K SIMS</div>",unsafe_allow_html=True)

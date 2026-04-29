@@ -7,12 +7,14 @@ import pytz
 import json
 from pathlib import Path
 
+# --- CONFIGURATION ---
 st.set_page_config(page_title="AVIATOR V6 ULTRA", layout="wide", initial_sidebar_state="collapsed")
 
 try:
     DATA_DIR = Path(__file__).parent / "aviator_v6_data"
 except:
     DATA_DIR = Path.cwd() / "aviator_v6_data"
+
 DATA_DIR.mkdir(exist_ok=True, parents=True)
 HISTORY_FILE = DATA_DIR / "history.json"
 STATS_FILE   = DATA_DIR / "stats.json"
@@ -31,6 +33,7 @@ def load_json(p, d):
 
 TZ = pytz.timezone("Indian/Antananarivo")
 
+# --- STYLING ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap');
@@ -49,18 +52,18 @@ st.markdown("""
 .mv{font-size:1.4rem;font-weight:900;font-family:'Orbitron';color:#ff0066}
 .acc-bar-wrap{background:rgba(255,255,255,.08);border-radius:8px;height:10px;margin:6px 0;overflow:hidden}
 .acc-bar-fill{height:10px;border-radius:8px;background:linear-gradient(90deg,#ff0066,#00ffcc)}
-.stButton>button{background:linear-gradient(135deg,#ff0066,#ff3399)!important;color:#fff!important;font-weight:900!important;border-radius:11px!important;height:52px!important;border:none!important;width:100%!important;transition:all .2s!important;font-size:.95rem!important}
-.stTextInput input{background:rgba(255,255,255,.12)!important;border:2px solid rgba(255,0,102,.55)!important;color:#ffffff!important;border-radius:11px!important;font-family:'Rajdhani'!important}
+.stButton>button{background:linear-gradient(135deg,#ff0066,#ff3399)!important;color:#fff!important;font-weight:900!important;border-radius:11px!important;height:52px!important;width:100%!important}
 </style>
 """, unsafe_allow_html=True)
 
+# --- SESSION STATE ---
 for k, v in [("auth", False), ("history", load_json(HISTORY_FILE, [])),
              ("stats", load_json(STATS_FILE, {"total": 0, "wins": 0, "losses": 0})),
              ("result", None)]:
     if k not in st.session_state:
         st.session_state[k] = v
 
-# ─── LOGIC FUNCTIONS ───
+# --- CORE LOGIC (MARKOV & BAYESIAN) ---
 STATES = ["COLD", "NORMAL", "WARM", "HOT"]
 
 def cote_to_state(c):
@@ -75,7 +78,7 @@ def build_markov(history):
     for i in range(len(cotes) - 1):
         s1, s2 = cote_to_state(cotes[i]), cote_to_state(cotes[i+1])
         trans[s1][s2] += 1
-    return {s: {s2: trans[s][s2]/sum(trans[s].values()) for s2 in STATES} for s in STATES}
+    return {s: {s2: trans[s][s2] / sum(trans[s].values()) for s2 in STATES} for s in STATES}
 
 def markov_predict(history, last_cote):
     matrix = build_markov(history)
@@ -88,12 +91,13 @@ def markov_predict(history, last_cote):
 def bayesian_update(history, base_prob):
     labeled = [h for h in history if h.get("res") in ["WIN", "LOSS"]]
     if len(labeled) < 3: return base_prob
-    recent = labeled[-30:]; weights = np.linspace(0.5, 1.0, len(recent))
+    recent = labeled[-30:]
+    weights = np.linspace(0.5, 1.0, len(recent))
     hits = sum(w for h, w in zip(recent, weights) if h.get("res") == "WIN")
     likelihood = (hits + 1) / (sum(weights) + 2)
     prior = base_prob / 100
-    post = (likelihood * prior) / ((likelihood * prior) + ((1 - likelihood) * (1 - prior)) + 1e-9)
-    return round(min(95, max(30, post * 100)), 1)
+    posterior = (likelihood * prior) / ((likelihood * prior) + ((1 - likelihood) * (1 - prior)) + 1e-9)
+    return round(min(95, max(30, posterior * 100)), 1)
 
 def derive_seeds(hex5, h_str, lc):
     base = f"{hex5}:{h_str}:{lc}"
@@ -113,10 +117,13 @@ def compute_entry(seed3, strength, lc, bayes_p, history):
     return entry_dt.strftime("%H:%M:%S"), shift
 
 def run_sims(s1, s2, lc):
-    mu, sigma, gk, gt = (2.1, 0.26, 2.2, 0.95) if lc < 1.5 else (2.06, 0.22, 2.4, 1.0) if lc < 2.5 else (2.01, 0.2, 2.6, 1.05) if lc < 3.5 else (1.97, 0.18, 2.8, 1.1)
-    np.random.seed(s1); s_ln = np.random.lognormal(np.log(mu), max(0.13, sigma), 350000)
-    np.random.seed(s2); s_g = np.random.gamma(gk, gt, 150000) + 1.01
-    return np.concatenate([s_ln[np.random.choice(350000, 350000, replace=False)], s_g])
+    if lc < 1.5: mu, sigma, gk, gt = 2.10, 0.26, 2.2, 0.95
+    elif lc < 2.5: mu, sigma, gk, gt = 2.06, 0.22, 2.4, 1.00
+    elif lc < 3.5: mu, sigma, gk, gt = 2.01, 0.20, 2.6, 1.05
+    else: mu, sigma, gk, gt = 1.97, 0.18, 2.8, 1.10
+    np.random.seed(s1); s_ln = np.random.lognormal(np.log(mu), max(0.13, sigma), 350_000)
+    np.random.seed(s2); s_g = np.random.gamma(gk, gt, 150_000) + 1.01
+    return np.concatenate([s_ln[np.random.choice(350_000, 350_000, replace=False)], s_g])
 
 def run_engine(hex5, h_str, lc):
     s1, s2, s3 = derive_seeds(hex5, h_str, lc)
@@ -125,29 +132,29 @@ def run_engine(hex5, h_str, lc):
     hot_p, cur, mk_conf = markov_predict(st.session_state.history, lc)
     bayes_p = bayesian_update(st.session_state.history, p3_raw + (hot_p - 0.5) * 22)
     strength = round(max(30, min(99, bayes_p*0.42 + float(np.mean(sims>=3.5))*22 + hot_p*14 + mk_conf*6 + (s1%180)/11)), 1)
-    acc = round(min(99, (bayes_p*0.45 + strength*0.35 + mk_conf*0.2)), 1)
+    acc = round(min(99, (bayes_p * 0.45 + strength * 0.35 + mk_conf * 0.20)), 1)
     entry, shift = compute_entry(s3, strength, lc, bayes_p, st.session_state.history)
-    sig, sc = ("💎 ULTRA X3+", "sig-u") if strength >= 88 else ("🔥 STRONG X3+", "sig-s") if strength >= 76 else ("🟢 GOOD X3+", "sig-s") if strength >= 62 else ("⚠️ SKIP", "sig-w")
-    return {"entry": entry, "shift_sec": shift, "signal": sig, "sig_class": sc, "p3": bayes_p, "strength": strength, "accuracy": acc, "cur_state": cur, "hot_p": round(hot_p*100, 1), "markov_conf": mk_conf, "tmin": round(float(np.percentile(sims, 32)), 2), "tmoy": round(float(np.percentile(sims, 50)), 2), "tmax": round(float(np.percentile(sims, 85)), 2), "res": "PENDING", "hist_idx": len(st.session_state.history), "last_cote": lc}
+    sig, sc = ("💎 ULTRA X3+", "sig-u") if strength >= 88 else ("🔥🔥 STRONG X3+", "sig-s") if strength >= 76 else ("🟢 GOOD X3+", "sig-s") if strength >= 62 else ("⚠️ SKIP", "sig-w")
+    return {"entry": entry, "shift_sec": shift, "signal": sig, "sig_class": sc, "p3": bayes_p, "p3_5": round(float(np.mean(sims>=3.5))*100,1), "p4": round(float(np.mean(sims>=4.0))*100,1), "strength": strength, "accuracy": acc, "cur_state": cur, "hot_p": round(hot_p*100, 1), "markov_conf": mk_conf, "tmin": round(float(np.percentile(sims, 32)), 2), "tmoy": round(float(np.percentile(sims, 50)), 2), "tmax": round(float(np.percentile(sims, 85)), 2), "res": "PENDING", "hist_idx": len(st.session_state.history), "last_cote": lc}
 
-# ─── UI ───
+# --- UI LOGIC ---
 if not st.session_state.auth:
     st.markdown("<div class='ttl'>✈️ AVIATOR V6 ULTRA</div>", unsafe_allow_html=True)
     _, cb, _ = st.columns([1, 1.2, 1])
     with cb:
         st.markdown("<div class='glass'>", unsafe_allow_html=True)
         pw = st.text_input("🔑 MOT DE PASSE", type="password")
-        if st.button("🔓 ACTIVER", use_container_width=True):
+        if st.button("🔓 ACTIVER"):
             if pw == "AVIATOR2026": st.session_state.auth = True; st.rerun()
-            else: st.error("❌ Erreur")
+            else: st.error("❌ Diso")
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- SIDEBAR ---
+# --- MAIN APP ---
 with st.sidebar:
     st.markdown("### 📊 STATS V6")
     s = st.session_state.stats
-    wr = round(s['wins']/s['total']*100, 1) if s['total']>0 else 0
+    wr = round(s['wins'] / max(1, s['total']) * 100, 1)
     st.markdown(f"<div class='mbox'><div class='mv'>{wr}%</div><div style='font-size:.6rem;'>WIN RATE</div></div>", unsafe_allow_html=True)
     if st.button("🗑️ RESET"):
         st.session_state.history = []; st.session_state.stats = {"total":0,"wins":0,"losses":0}; st.rerun()
@@ -160,13 +167,12 @@ with ci:
     h5 = st.text_input("🔐 HEX", placeholder="ac50e")
     hr = st.text_input("⏰ LAST HEURE", placeholder="20:22")
     lc = st.number_input("📊 LAST COTE", value=1.88, step=0.01)
-    if st.button("🚀 ANALYSER V6", use_container_width=True):
+    if st.button("🚀 ANALYSER V6"):
         if h5 and hr:
             res = run_engine(h5.strip(), hr.strip(), lc)
             st.session_state.result = res
             st.session_state.history.append(res)
-            save_json(HISTORY_FILE, st.session_state.history)
-            st.rerun()
+            save_json(HISTORY_FILE, st.session_state.history); st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
 with co:
@@ -183,30 +189,21 @@ with co:
         with c3: st.markdown(f"<div class='tbox'><div class='tl'>MAX</div><div class='tv'>{r['tmax']}x</div></div>", unsafe_allow_html=True)
         
         cw, cl = st.columns(2)
-        if cw.button("✅ WIN", use_container_width=True):
+        if cw.button("✅ WIN"):
             st.session_state.history[r['hist_idx']]['res'] = "WIN"
             st.session_state.stats['total'] += 1; st.session_state.stats['wins'] += 1
             save_json(STATS_FILE, st.session_state.stats); st.rerun()
-        if cl.button("❌ LOSS", use_container_width=True):
+        if cl.button("❌ LOSS"):
             st.session_state.history[r['hist_idx']]['res'] = "LOSS"
             st.session_state.stats['total'] += 1; st.session_state.stats['losses'] += 1
             save_json(STATS_FILE, st.session_state.stats); st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-# --- LOGS SECTION ---
 if st.session_state.history:
     st.markdown("---")
     st.markdown("### 📜 LOGS V6")
-    log_data = [{
-        "Entry": h.get("entry", ""),
-        "X3%": h.get("p3", ""),
-        "Acc%": h.get("accuracy", ""),
-        "State": h.get("cur_state", ""),
-        "Res": h.get("res", "PENDING")
-    } for h in reversed(st.session_state.history[-10:])]
-    
-    df = pd.DataFrame(log_data)
-    # Corrected closing parenthesis below
+    df = pd.DataFrame([{
+        "Entry": h.get("entry"), "X3%": h.get("p3"), 
+        "Acc%": h.get("accuracy"), "State": h.get("cur_state"), "Res": h.get("res")
+    } for h in reversed(st.session_state.history[-10:])])
     st.dataframe(df, use_container_width=True, hide_index=True)
-
-st.markdown("<div style='text-align:center;font-size:.6rem;opacity:.2;'>V6 ULTRA • 2026</div>", unsafe_allow_html=True)

@@ -53,14 +53,14 @@ st.markdown("""
 /* FANITSIANA NY INPUT (Soratra mainty stylé) */
 .stTextInput label, .stNumberInput label {color:#ffaacc!important;font-weight:700!important;font-size:.87rem!important;font-family:'Rajdhani'!important}
 .stTextInput input, .stNumberInput input {
-    background: rgba(255, 255, 255, 0.95) !important; /* Loko fotsy mba hivongana ny mainty */
+    background: rgba(255, 255, 255, 0.95) !important;
     border: 2px solid rgba(255, 0, 102, 0.6) !important;
-    color: #000000 !important; /* Soratra mainty */
-    font-weight: 900 !important; /* Matevina */
+    color: #000000 !important;
+    font-weight: 900 !important;
     border-radius: 11px !important;
     font-size: 1.05rem !important;
     padding: 11px 14px !important;
-    font-family: 'Orbitron', sans-serif !important; /* Stylé */
+    font-family: 'Orbitron', sans-serif !important;
 }
 .stTextInput input::placeholder, .stNumberInput input::placeholder {
     color: rgba(0, 0, 0, 0.45) !important; 
@@ -243,7 +243,7 @@ with co:
     if r:
         st.markdown("<div class='card'>",unsafe_allow_html=True)
         st.markdown(f"<div class='{r['sc']}'>{r['sig']}</div>",unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center;color:rgba(255,255,255,.4);font-size:.73rem;margin-top:14px;'>▸ HEURE D'ENTRÉE (NOW + {r['shift']}s)</p>".format(**{"r":r}),unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align:center;color:rgba(255,255,255,.4);font-size:.73rem;margin-top:14px;'>▸ HEURE D'ENTRÉE (NOW + {r['shift']}s)</p>",unsafe_allow_html=True)
         st.markdown(f"<div class='etime'>{r['ent']}</div>",unsafe_allow_html=True)
         st.markdown(f"<div class='pct'>{r['bp']}%</div>",unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:rgba(255,255,255,.32);font-size:.7rem;'>PROB X3+ BAYESIAN</p>",unsafe_allow_html=True)

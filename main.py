@@ -30,35 +30,31 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap');
 .stApp{background:radial-gradient(ellipse at 40% 0%,#1a002288 0%,#050008 65%);color:#f0eaff;font-family:'Rajdhani',sans-serif}
+
+/* Hanitsiana ny soratra rehefa adika (Selection/Copy) */
+::selection { background: #00ffcc; color: #000 !important; }
+
 .ttl{font-family:'Orbitron';font-size:clamp(2rem,8vw,3rem);font-weight:900;text-align:center;background:linear-gradient(90deg,#ff0066,#ff66aa,#00ffcc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
 .sub{text-align:center;color:#ff006677;font-size:.8rem;letter-spacing:.3em;margin-bottom:1.5rem}
 .card{background:rgba(12,0,28,.92);border:2px solid rgba(255,0,102,.35);border-radius:18px;padding:clamp(14px,4vw,22px);backdrop-filter:blur(14px);margin-bottom:16px}
 .etime{font-family:'Orbitron';font-size:clamp(3rem,12vw,5rem);font-weight:900;text-align:center;color:#ff0066;text-shadow:0 0 40px #ff0066;margin:18px 0;animation:ep 2s ease-in-out infinite}
+
 @keyframes ep{0%,100%{text-shadow:0 0 30px #ff0066}50%{text-shadow:0 0 60px #ff0066,0 0 90px #ff006688}}
 .pct{font-size:clamp(2.8rem,10vw,4.2rem);font-weight:900;font-family:'Orbitron';text-align:center;color:#00ffcc;margin:8px 0}
 .sig-u{text-align:center;font-family:'Orbitron';font-size:clamp(.95rem,3.5vw,1.5rem);font-weight:900;color:#ff0066;text-shadow:0 0 20px #ff006688;padding:12px}
 .sig-s{text-align:center;font-family:'Orbitron';font-size:clamp(.9rem,3vw,1.3rem);font-weight:700;color:#00ffcc;padding:10px}
 .sig-w{text-align:center;font-family:'Orbitron';font-size:clamp(.85rem,2.8vw,1.15rem);color:#ffaa00;padding:10px}
 .sig-x{text-align:center;font-family:'Orbitron';font-size:clamp(.85rem,2.8vw,1.1rem);color:#666;padding:8px}
+
 .tbox{background:rgba(255,255,255,.06);border-radius:14px;padding:14px;text-align:center;margin:4px}
 .tv{font-size:clamp(1.4rem,5vw,2.2rem);font-weight:900;font-family:'Orbitron'}
 .tl{font-size:.6rem;color:rgba(255,255,255,.38);letter-spacing:.12em;text-transform:uppercase;margin-top:3px}
 .ta{font-size:.7rem;color:#00ff88;margin-top:4px;font-weight:700}
-.tag{background:rgba(255,0,102,.12);border:1px solid rgba(255,0,102,.35);border-radius:8px;padding:4px 11px;font-size:.8rem;display:inline-block;margin:3px;color:#ffaacc}
-.tag-g{background:rgba(0,255,204,.1);border:1px solid rgba(0,255,204,.3);border-radius:8px;padding:4px 11px;font-size:.8rem;display:inline-block;margin:3px;color:#aaffee}
-.sb{background:rgba(255,0,102,.07);border:1px solid rgba(255,0,102,.2);border-radius:10px;padding:10px;text-align:center;margin:4px 0}
-.sv{font-size:1.3rem;font-weight:900;font-family:'Orbitron';color:#ff0066}
-.sl{font-size:.56rem;color:rgba(255,255,255,.35);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
-.ib{background:rgba(0,255,204,.05);border-left:3px solid #00ffcc;border-radius:0 10px 10px 0;padding:11px 15px;margin:8px 0;font-size:.88rem;line-height:1.8}
-.stButton>button{background:linear-gradient(135deg,#ff0066,#cc0055)!important;color:#fff!important;font-weight:900!important;border-radius:12px!important;height:52px!important;border:none!important;width:100%!important;font-family:'Rajdhani'!important;font-size:.95rem!important;transition:all .2s!important}
-.stButton>button:hover{transform:scale(1.02);box-shadow:0 0 24px rgba(255,0,102,.5)!important}
-.stTextInput label,.stNumberInput label{color:#ffaacc!important;font-weight:700!important;font-size:.87rem!important;font-family:'Rajdhani'!important}
-.stTextInput input{background:rgba(255,255,255,.12)!important;border:2px solid rgba(255,0,102,.6)!important;color:#fff!important;border-radius:11px!important;font-size:.93rem!important;padding:11px 14px!important;font-family:'Rajdhani'!important}
-.stTextInput input::placeholder{color:rgba(255,255,255,.7)!important;font-style:italic!important;opacity:1!important}
-.stTextInput input:focus{border-color:#ff0066!important;box-shadow:0 0 14px rgba(255,0,102,.3)!important;background:rgba(255,255,255,.14)!important}
-.stNumberInput input{background:rgba(255,255,255,.12)!important;border:2px solid rgba(255,0,102,.6)!important;color:#fff!important;border-radius:11px!important;font-size:.93rem!important;padding:11px 14px!important}
-.stNumberInput input:focus{border-color:#ff0066!important;box-shadow:0 0 14px rgba(255,0,102,.3)!important}
-@media(max-width:768px){.card{padding:12px!important}}
+
+.stTextInput input::placeholder{color:rgba(255,255,255,0.7) !important; opacity: 1 !important; font-style:italic !important}
+.stTextInput input{background:rgba(255,255,255,.1)!important;border:2px solid rgba(255,0,102,.5)!important;color:#fff!important;border-radius:11px!important;font-size:.93rem!important;padding:11px 14px!important}
+
+.stButton>button{background:linear-gradient(135deg,#ff0066,#cc0055)!important;color:#fff!important;font-weight:900!important;border-radius:12px!important;height:52px!important;border:none!important;width:100%!important}
 </style>
 """, unsafe_allow_html=True)
 
@@ -125,103 +121,69 @@ def engine(hex5, tin, lc):
     elif str_>=76 and bp>=36: sig,sc="🔥🔥 STRONG X3+ — GO","sig-s"
     elif str_>=62 and bp>=28: sig,sc="🟢 GOOD X3+ — WATCH","sig-w"
     else:                     sig,sc="⚠️ SKIP CE ROUND","sig-x"
-    return {"lc":lc,"ent":ent,"shift":shift,"sig":sig,"sc":sc,
-            "bp":bp,"p35":p35,"p4":p4,"str":str_,
-            "cur":cur,"hp":hp,"tmin":tmin,"tmoy":tmoy,"tmax":tmax,
-            "res":None,"hi":len(st.session_state.H)}
+    return {"lc":lc,"ent":ent,"shift":shift,"sig":sig,"sc":sc,"bp":bp,"p35":p35,"p4":p4,"str":str_,"cur":cur,"hp":hp,"tmin":tmin,"tmoy":tmoy,"tmax":tmax,"res":None,"hi":len(st.session_state.H)}
 
 if not st.session_state.auth:
-    st.markdown("<div class='ttl'>✈️ AVIATOR X3 V7</div>", unsafe_allow_html=True)
-    st.markdown("<div class='sub'>MARKOV + BAYESIAN • ENTRY TIME ULTRA PRÉCIS</div>", unsafe_allow_html=True)
+    st.markdown("<div class='ttl'>✈️ AVIATOR X3 V7</div>",unsafe_allow_html=True)
+    st.markdown("<div class='sub'>MARKOV + BAYESIAN • ENTRY TIME ULTRA PRÉCIS</div>",unsafe_allow_html=True)
     _,cb,_=st.columns([1,1.2,1])
     with cb:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        pw=st.text_input("🔑 MOT DE PASSE", type="password", placeholder="CODE: AVIATOR2026")
-        if st.button("🔓 ACTIVER", use_container_width=True):
+        st.markdown("<div class='card'>",unsafe_allow_html=True)
+        pw=st.text_input("🔑 MOT DE PASSE",type="password",placeholder="Entrez: AVIATOR2026")
+        if st.button("🔓 ACTIVER",use_container_width=True):
             if pw=="AVIATOR2026": st.session_state.auth=True; st.rerun()
             else: st.error("❌ Code incorrect")
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>",unsafe_allow_html=True)
     st.stop()
 
 with st.sidebar:
     st.markdown("### ✈️ AVIATOR V7")
     S=st.session_state.S; t,w,l=S.get("t",0),S.get("w",0),S.get("l",0)
     wr=round(w/t*100,1) if t>0 else 0
-    st.markdown(f"<div class='sb'><div class='sv'>{wr}%</div><div class='sl'>WIN RATE</div></div>", unsafe_allow_html=True)
-    c1,c2=st.columns(2)
-    with c1: st.markdown(f"<div class='sb'><div class='sv'>{w}</div><div class='sl'>WINS</div></div>", unsafe_allow_html=True)
-    with c2: st.markdown(f"<div class='sb'><div class='sv'>{l}</div><div class='sl'>LOSS</div></div>", unsafe_allow_html=True)
-    st.markdown("---")
-    if st.button("🗑️ RESET", use_container_width=True):
-        st.session_state.H=[]; st.session_state.S={"t":0,"w":0,"l":0}; st.session_state.R=None
-        for f in [HF,SF]:
-            try:
-                if f.exists(): f.unlink()
-            except: pass
-        st.success("✅"); st.rerun()
+    st.markdown(f"<div class='sb'><div class='sv'>{wr}%</div><div class='sl'>WIN RATE</div></div>",unsafe_allow_html=True)
+    if st.button("🗑️ RESET",use_container_width=True):
+        st.session_state.H=[];st.session_state.S={"t":0,"w":0,"l":0};st.session_state.R=None
+        st.rerun()
 
-st.markdown("<div class='ttl'>✈️ AVIATOR X3 V7</div>", unsafe_allow_html=True)
-st.markdown("<div class='sub'>MARKOV + BAYESIAN • 400K SIMS • ENTRY ULTRA PRÉCIS</div>", unsafe_allow_html=True)
-ci,co=st.columns([1,2], gap="medium")
-
+st.markdown("<div class='ttl'>✈️ AVIATOR X3 V7</div>",unsafe_allow_html=True)
+ci,co=st.columns([1,2],gap="medium")
 with ci:
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    h5=st.text_input("🔐 HEX SHA512 (5 chars)", placeholder="SORATY ETO (Ex: ac50e)")
-    ti=st.text_input("⏰ TIME ROUND PRÉCÉDENT", placeholder="ORA ETO (Ex: 20:22:24)")
-    lc=st.number_input("📊 LAST COTE", value=1.88, step=0.01, format="%.2f")
-    if lc<1.5: sl,sc2="🔵 COLD","#4488ff"
-    elif lc<2.5: sl,sc2="⚪ NORMAL","#aaa"
-    elif lc<3.5: sl,sc2="🟡 WARM","#ffcc00"
-    else: sl,sc2="🔴 HOT","#ff3366"
-    st.markdown(f"<div style='text-align:center;margin:6px 0;'><span style='background:rgba(255,255,255,.07);border-radius:8px;padding:4px 14px;color:{sc2};font-size:.82rem;'>{sl}</span></div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-    if st.button("🚀 ANALYSER", use_container_width=True):
+    st.markdown("<div class='card'>",unsafe_allow_html=True)
+    h5=st.text_input("🔐 HEX SHA512 (5 chars)",placeholder="Ex: ac50e")
+    ti=st.text_input("⏰ TIME ROUND PRÉCÉDENT",placeholder="Ex: 20:22:24")
+    lc=st.number_input("📊 LAST COTE",value=1.88,step=0.01,format="%.2f")
+    st.markdown("</div>",unsafe_allow_html=True)
+    if st.button("🚀 ANALYSER",use_container_width=True):
         if h5 and ti:
-            with st.spinner("⚡ 400k sims..."):
-                r=engine(h5.strip(),ti.strip(),lc)
+            r=engine(h5.strip(),ti.strip(),lc)
             st.session_state.R=r
             st.session_state.H.append(dict(r))
-            if len(st.session_state.H)>200: st.session_state.H.pop(0)
-            sj(HF,st.session_state.H); st.session_state.ck+=1; st.rerun()
-        else: st.error("❌ HEX et TIME obligatoires!")
+            sj(HF,st.session_state.H); st.rerun()
 
 with co:
     r=st.session_state.R
     if r:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        st.markdown(f"<div class='{r['sc']}'>{r['sig']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<p style='text-align:center;color:rgba(255,255,255,.4);font-size:.73rem;margin-top:14px;'>▸ HEURE D'ENTRÉE (NOW + {r['shift']}s)</p>", unsafe_allow_html=True)
-        st.markdown(f"<div class='etime'>{r['ent']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='pct'>{r['bp']}%</div>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center;color:rgba(255,255,255,.32);font-size:.7rem;'>PROB X3+ BAYESIAN</p>", unsafe_allow_html=True)
-        st.markdown(f"""<div style='text-align:center;margin:10px 0;'>
-        <span class='tag'>🔄 {r['cur']}</span><span class='tag'>🔥 {r['hp']}%</span>
-        <span class='tag'>💪 {r['str']}</span>
-        <span class='tag-g'>X3.5+ {r['p35']}%</span><span class='tag-g'>X4+ {r['p4']}%</span>
-        </div>""", unsafe_allow_html=True)
-        c1,c2,c3=st.columns(3)
-        with c1: st.markdown(f"<div class='tbox'><div class='tl'>MIN</div><div class='tv' style='color:#00ffcc;'>{r['tmin']}×</div><div class='ta'>70%</div></div>", unsafe_allow_html=True)
-        with c2: st.markdown(f"<div class='tbox'><div class='tl'>MOYEN</div><div class='tv' style='color:#ffd700;'>{r['tmoy']}×</div><div class='ta'>50%</div></div>", unsafe_allow_html=True)
-        with c3: st.markdown(f"<div class='tbox'><div class='tl'>MAX</div><div class='tv' style='color:#ff3366;'>{r['tmax']}×</div><div class='ta'>X3+</div></div>", unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<div class='card'>",unsafe_allow_html=True)
+        st.markdown(f"<div class='{r['sc']}'>{r['sig']}</div>",unsafe_allow_html=True)
+        st.markdown(f"<div class='etime' id='copy-target'>{r['ent']}</div>",unsafe_allow_html=True)
+        st.markdown(f"<div class='pct'>{r['bp']}%</div>",unsafe_allow_html=True)
+        
+        # Section ho an'ny fanaovana "Copy" ho mainty stylé
+        st.code(f"HASH: {h5} | COTE: {r['tmax']} | TIME: {r['ent']}", language="markdown")
+        
         cw,cl2=st.columns(2)
         with cw:
-            if st.button("✅ WIN", use_container_width=True, key="bw"):
+            if st.button("✅ WIN",use_container_width=True):
                 idx=r.get("hi",-1)
                 if 0<=idx<len(st.session_state.H): st.session_state.H[idx]["res"]="W"; sj(HF,st.session_state.H)
-                st.session_state.S["t"]+=1; st.session_state.S["w"]+=1; sj(SF,st.session_state.S); st.success("🎯"); st.rerun()
+                st.session_state.S["t"]+=1; st.session_state.S["w"]+=1; sj(SF,st.session_state.S); st.rerun()
         with cl2:
-            if st.button("❌ LOSS", use_container_width=True, key="bl"):
+            if st.button("❌ LOSS",use_container_width=True):
                 idx=r.get("hi",-1)
                 if 0<=idx<len(st.session_state.H): st.session_state.H[idx]["res"]="L"; sj(HF,st.session_state.H)
                 st.session_state.S["t"]+=1; st.session_state.S["l"]+=1; sj(SF,st.session_state.S); st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-    else:
-        st.markdown("<div class='card' style='min-height:350px;display:flex;align-items:center;justify-content:center;'><div style='text-align:center;'><div style='font-size:3rem;'>✈️</div><div style='color:rgba(255,255,255,.15);font-family:Orbitron;margin-top:10px;'>EN ATTENTE...</div></div></div>", unsafe_allow_html=True)
+        st.markdown("</div>",unsafe_allow_html=True)
 
 if st.session_state.H:
-    st.markdown("---")
-    df=pd.DataFrame([{"Entry":x.get("ent",""),"Shift":f"{x.get('shift',0)}s","X3%":x.get("bp",""),"State":x.get("cur",""),"Min":x.get("tmin",""),"Max":x.get("tmax",""),"Res":"WIN" if x.get("res")=="W" else "LOSS" if x.get("res")=="L" else "—"} for x in reversed(st.session_state.H[-10:])])
-    st.dataframe(df, use_container_width=True, hide_index=True)
-
-st.markdown("<div style='text-align:center;margin-top:20px;color:rgba(255,255,255,.08);font-size:.55rem;'>AVIATOR X3 V7 • MARKOV+BAYESIAN • ENTRY ULTRA PRÉCIS</div>", unsafe_allow_html=True)
+    df=pd.DataFrame([{"Entry":x.get("ent",""),"X3%":x.get("bp",""),"Min":x.get("tmin",""),"Max":x.get("tmax",""),"Res":x.get("res","—")} for x in reversed(st.session_state.H[-10:])])
+    st.dataframe(df,use_container_width=True,hide_index=True)

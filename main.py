@@ -31,7 +31,7 @@ st.markdown("""
 html,body,.stApp{background:#05010f!important;color:#f0ecff;font-family:'Inter',sans-serif}
 [data-testid="stSidebar"]{background:#08030f!important;border-right:1px solid rgba(155,77,255,.15)!important}
 .block-container{padding-top:1.2rem!important;max-width:1100px}
-.main-title{font-family:'Orbitron';font-size:clamp(1.5rem,6vw,2.5rem);font-weight:900;text-align:center;letter-spacing:.04em;color:#ffffff;margin:0 0 5px;text-shadow:0 0 15px rgba(181,123,255,0.5);word-break:break-word}
+.main-title{font-family:'Orbitron';font-size:clamp(1.2rem,5vw,2.5rem)!important;font-weight:900;text-align:center;color:#ffffff;margin:0 0 5px;word-break:break-word;white-space:normal;line-height:1.1}
 .main-title span{color:#b57bff}
 .main-sub{text-align:center;font-size:.76rem;letter-spacing:.35em;color:#5a4a7a;text-transform:uppercase;margin-bottom:1.4rem}
 .card{background:linear-gradient(160deg,#120828 0%,#0a0520 100%);border:1px solid rgba(155,77,255,.22);border-radius:20px;padding:clamp(14px,4vw,24px);margin-bottom:16px;box-shadow:0 4px 24px rgba(0,0,0,.4)}
@@ -67,8 +67,7 @@ html,body,.stApp{background:#05010f!important;color:#f0ecff;font-family:'Inter',
 .empty-state{min-height:340px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;opacity:.25}
 .stTextInput input, .stNumberInput input{background:#1a1033 !important;border:2px solid #b57bff !important;color:#ffffff !important;border-radius:13px !important;font-size:1rem !important;padding:12px 16px !important}
 .stTextInput input::placeholder, .stNumberInput input::placeholder{color:#a0a0a0 !important;opacity:1 !important;font-style:italic!important}
-.stTextInput input:focus{border-color:rgba(181,123,255,.7)!important;box-shadow:0 0 0 3px rgba(181,123,255,.12)!important}
-.stNumberInput input:focus{border-color:rgba(181,123,255,.7)!important;box-shadow:0 0 0 3px rgba(181,123,255,.12)!important}
+.stTextInput input:focus, .stNumberInput input:focus{border-color:rgba(181,123,255,.7)!important;box-shadow:0 0 0 3px rgba(181,123,255,.12)!important}
 .stButton>button{background:linear-gradient(135deg,#7722cc,#5511aa)!important;color:#fff!important;font-weight:700!important;border-radius:14px!important;height:52px!important;border:none!important;width:100%!important;font-family:'Inter'!important;font-size:.93rem!important;transition:all .2s!important;box-shadow:0 4px 20px rgba(119,34,204,.35)!important}
 .stButton>button:hover{transform:translateY(-2px)!important;box-shadow:0 8px 28px rgba(119,34,204,.5)!important}
 @media(max-width:768px){.card,.card-accent{padding:14px!important}.tour-grid{grid-template-columns:1fr 1fr}}
@@ -173,7 +172,7 @@ def tgt_html(val,lbl,acc,vc,ac):
     <div class='tgt-a' style='color:rgb({ac});'>{acc}%</div></div>"""
 
 if not st.session_state.auth:
-    st.markdown("<div class='main-title'>✈️ AVIATOR <span>X3 V9</span></div>",unsafe_allow_html=True)
+    st.markdown("<div class='main-title'>AVIATOR <span>X3 V9</span></div>",unsafe_allow_html=True)
     st.markdown("<div class='main-sub'>Ultra Sniper · Multi-Tour · Markov + Bayesian</div>",unsafe_allow_html=True)
     _,cb,_=st.columns([1,1.1,1])
     with cb:
@@ -183,16 +182,6 @@ if not st.session_state.auth:
             if pw=="AVIATOR2026": st.session_state.auth=True; st.rerun()
             else: st.error("❌ Code incorrect")
         st.markdown("</div>",unsafe_allow_html=True)
-    st.markdown("""<div class='card' style='max-width:680px;margin:16px auto;'>
-    <div class='section-lbl'>Fanazavana Malagasy</div>
-    <div style='line-height:1.9;font-size:.87rem;color:rgba(240,236,255,.7);'>
-    <b style='color:#b57bff;'>HEX 5 chars:</b> SHA512 premiers chars → <code style='background:rgba(181,123,255,.12);padding:2px 7px;border-radius:6px;'>ac50e</code><br>
-    <b style='color:#b57bff;'>Last Time:</b> Ora nilanihan'ny round TALOHA → <code style='background:rgba(181,123,255,.12);padding:2px 7px;border-radius:6px;'>20:22:24</code><br>
-    <b style='color:#b57bff;'>Last Cote:</b> Résultat taloha → <code style='background:rgba(181,123,255,.12);padding:2px 7px;border-radius:6px;'>1.88×</code><br><br>
-    <b style='color:#66ffee;'>Tour 1</b> = Last Time + 40-120sec → round akaiky<br>
-    <b style='color:#66ffee;'>Tour 2</b> = Tour 1 + durée round → round faharoa<br>
-    Accuracy <b>variable 10-99%</b> miankina @ signal + historique
-    </div></div>""",unsafe_allow_html=True)
     st.stop()
 
 with st.sidebar:
@@ -211,7 +200,7 @@ with st.sidebar:
             except: pass
         st.success("✅"); st.rerun()
 
-st.markdown("<div class='main-title'>✈️ AVIATOR <span>X3 V9</span></div>",unsafe_allow_html=True)
+st.markdown("<div class='main-title'>AVIATOR <span>X3 V9</span></div>",unsafe_allow_html=True)
 st.markdown("<div class='main-sub'>Ultra Sniper · 450K Sims · Multi-Tour</div>",unsafe_allow_html=True)
 
 ci,co=st.columns([1,2],gap="large")

@@ -31,7 +31,7 @@ st.markdown("""
 html,body,.stApp{background:#05010f!important;color:#f0ecff;font-family:'Inter',sans-serif}
 [data-testid="stSidebar"]{background:#08030f!important;border-right:1px solid rgba(155,77,255,.15)!important}
 .block-container{padding-top:1.2rem!important;max-width:1100px}
-.main-title{font-family:'Orbitron';font-size:clamp(1.9rem,7vw,3rem);font-weight:900;text-align:center;letter-spacing:.04em;color:#ffffff;margin:0 0 2px}
+.main-title{font-family:'Orbitron';font-size:clamp(1.5rem,6vw,2.5rem);font-weight:900;text-align:center;letter-spacing:.04em;color:#ffffff;margin:0 0 5px;text-shadow:0 0 15px rgba(181,123,255,0.5);word-break:break-word}
 .main-title span{color:#b57bff}
 .main-sub{text-align:center;font-size:.76rem;letter-spacing:.35em;color:#5a4a7a;text-transform:uppercase;margin-bottom:1.4rem}
 .card{background:linear-gradient(160deg,#120828 0%,#0a0520 100%);border:1px solid rgba(155,77,255,.22);border-radius:20px;padding:clamp(14px,4vw,24px);margin-bottom:16px;box-shadow:0 4px 24px rgba(0,0,0,.4)}
@@ -65,11 +65,9 @@ html,body,.stApp{background:#05010f!important;color:#f0ecff;font-family:'Inter',
 .stat-v{font-family:'Orbitron';font-size:1.25rem;font-weight:900;color:#b57bff}
 .stat-l{font-size:.52rem;color:rgba(255,255,255,.3);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
 .empty-state{min-height:340px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;opacity:.25}
-.stTextInput label,.stNumberInput label{color:#c4a8ff!important;font-weight:600!important;font-size:.84rem!important;font-family:'Inter'!important}
-.stTextInput input{background:rgba(181,123,255,.07)!important;border:1.5px solid rgba(181,123,255,.35)!important;color:#f0ecff!important;border-radius:13px!important;font-size:.92rem!important;padding:11px 14px!important}
-.stTextInput input::placeholder{color:rgba(255,255,255,.32)!important;font-style:italic!important}
-.stTextInput input:focus{border-color:rgba(181,123,255,.7)!important;box-shadow:0 0 0 3px rgba(181,123,255,.12)!important;background:rgba(181,123,255,.1)!important}
-.stNumberInput input{background:rgba(181,123,255,.07)!important;border:1.5px solid rgba(181,123,255,.35)!important;color:#f0ecff!important;border-radius:13px!important;font-size:.92rem!important;padding:11px 14px!important}
+.stTextInput input, .stNumberInput input{background:#1a1033 !important;border:2px solid #b57bff !important;color:#ffffff !important;border-radius:13px !important;font-size:1rem !important;padding:12px 16px !important}
+.stTextInput input::placeholder, .stNumberInput input::placeholder{color:#a0a0a0 !important;opacity:1 !important;font-style:italic!important}
+.stTextInput input:focus{border-color:rgba(181,123,255,.7)!important;box-shadow:0 0 0 3px rgba(181,123,255,.12)!important}
 .stNumberInput input:focus{border-color:rgba(181,123,255,.7)!important;box-shadow:0 0 0 3px rgba(181,123,255,.12)!important}
 .stButton>button{background:linear-gradient(135deg,#7722cc,#5511aa)!important;color:#fff!important;font-weight:700!important;border-radius:14px!important;height:52px!important;border:none!important;width:100%!important;font-family:'Inter'!important;font-size:.93rem!important;transition:all .2s!important;box-shadow:0 4px 20px rgba(119,34,204,.35)!important}
 .stButton>button:hover{transform:translateY(-2px)!important;box-shadow:0 8px 28px rgba(119,34,204,.5)!important}
@@ -136,10 +134,10 @@ def engine(h5,lt,lc):
     fh=hashlib.sha512(f"{h5}:{lt}:{lc}".encode()).hexdigest()
     hn=int(fh[:16],16)
     np.random.seed(int((hn&0xFFFFFFFF)+(lc*1000))%(2**32))
-    if lc<1.5:   bs,sg=2.12,0.24
+    if lc<1.5:    bs,sg=2.12,0.24
     elif lc<2.5: bs,sg=2.06,0.21
     elif lc<3.5: bs,sg=2.00,0.19
-    else:        bs,sg=1.96,0.18
+    else:         bs,sg=1.96,0.18
     bs+=(hn%180)/1200; sg=max(0.14,sg-lc*0.0022)
     sm=np.random.lognormal(np.log(bs),sg,450_000)
     p3=round(float(np.mean(sm>=3.0))*100,2)
@@ -157,11 +155,11 @@ def engine(h5,lt,lc):
     acc_min,acc_moy=calc_acc(base_a,str_,st.session_state.H)
     acc_max=round(min(99,max(10,p3*0.82+(len([x for x in st.session_state.H[-15:] if x.get("res")=="W"])*0.8))),1)
     t1,sh1,c1,t2,sh2,c2=calc_tours(hn,bp,str_,lc,lt)
-    if   str_>=90 and bp>=46: sig,sc="💎 ULTRA X3+ — FIRE MAX","sig-ultra"
+    if    str_>=90 and bp>=46: sig,sc="💎 ULTRA X3+ — FIRE MAX","sig-ultra"
     elif str_>=80 and bp>=40: sig,sc="💎 STRONG X3+ — BUY","sig-ultra"
     elif str_>=70 and bp>=34: sig,sc="🔥 GOOD X3+ — GO","sig-strong"
     elif str_>=58 and bp>=27: sig,sc="⚡ MODERATE — SMALL BET","sig-mod"
-    else:                     sig,sc="◎ SKIP — PAS DE SIGNAL","sig-skip"
+    else:                       sig,sc="◎ SKIP — PAS DE SIGNAL","sig-skip"
     return {"lc":lc,"t1":t1,"sh1":sh1,"c1":c1,"t2":t2,"sh2":sh2,"c2":c2,
             "sig":sig,"sc":sc,"bp":bp,"p3":p3,"p35":p35,"p4":p4,"str":str_,
             "cur":cur,"hp":hp,"tmin":tmin,"tmoy":tmoy,"tmax":tmax,
@@ -220,8 +218,8 @@ ci,co=st.columns([1,2],gap="large")
 with ci:
     st.markdown("<div class='card'>",unsafe_allow_html=True)
     st.markdown("<div class='section-lbl'>Paramètres</div>",unsafe_allow_html=True)
-    h5 = st.text_input("HEX SHA512 — 5 chars",placeholder="ac50e  (premiers chars SHA512)")
-    ti = st.text_input("Last Time — HH:MM:SS",placeholder="20:22:24  (ora round taloha)")
+    h5 = st.text_input("HEX SHA512 — 5 chars",placeholder="ac50e")
+    ti = st.text_input("Last Time — HH:MM:SS",placeholder="20:22:24")
     lc = st.number_input("Last Cote — résultat précédent",value=1.88,step=0.01,format="%.2f",min_value=1.01)
     cs=s2st(lc); cbg={"COLD":"rgba(68,136,255,.15)","NORMAL":"rgba(150,150,150,.12)","WARM":"rgba(255,200,0,.15)","HOT":"rgba(255,50,50,.15)"}[cs]; cc={"COLD":"#4488ff","NORMAL":"#888","WARM":"#ffcc00","HOT":"#ff3366"}[cs]
     st.markdown(f"<div style='text-align:center;margin:6px 0'><span style='background:{cbg};border:1px solid {cc}44;border-radius:20px;padding:5px 16px;color:{cc};font-size:.8rem;font-weight:700;'>⬤ {cs}</span></div>",unsafe_allow_html=True)
